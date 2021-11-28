@@ -1,8 +1,10 @@
 package cmd
 
 import (
+	"context"
+	"cryptotrade/domain/backend/core/usecase"
 	"github.com/spf13/cobra"
-	"cryptotrade/domain/backend/adapters/api"
+	"log"
 )
 
 func init() {
@@ -13,7 +15,11 @@ var restCmd = &cobra.Command{
 	Use:   "rest-server",
 	Short: "Starting rest server",
 	Run: func(cmd *cobra.Command, args []string) {
-		api.StartRestServer()
+		//api.StartRestServer()
+		r := usecase.NewReceiverHandler()
+		err := r.DataReceiver(context.TODO())
+		if err != nil {
+			log.Println(err)
+		}
 	},
 }
-

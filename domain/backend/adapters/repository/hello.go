@@ -1,12 +1,8 @@
 package repository
 
 import (
-	"context"
-	"database/sql"
-	"github.com/volatiletech/null/v8"
-	"github.com/volatiletech/sqlboiler/v4/boil"
-	"cryptotrade/domain/backend/adapters/repository/models"
 	"cryptotrade/domain/backend/core/ports"
+	"database/sql"
 )
 
 type helloRepository struct {
@@ -18,12 +14,9 @@ func NewHelloRepository(db *sql.DB) ports.HelloRepository {
 }
 
 func (hp helloRepository) Get() string {
-	r, _ := models.Hellos().One(context.TODO(), hp.db)
-	return r.Value.String
+	return ""
 }
 
 func (hp helloRepository) Save(input string) {
-	var helloModel models.Hello
-	helloModel.Value = null.NewString(input, true)
-	helloModel.Insert(context.TODO(), hp.db, boil.Infer())
+	// save
 }

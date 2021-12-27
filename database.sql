@@ -1,13 +1,13 @@
 create table if not exists candles_content
 (
-    id SERIAL primary key,
-    time_frame    int,
-	opening double,
-	closing double,
-	highest double,
-	lowest  double,
-	volume  double,
-	amount  double,
+    id         BIGSERIAL primary key,
+    time_frame bigint,
+    opening    float8,
+    closing    float8,
+    highest    float8,
+    lowest     float8,
+    volume     float8,
+    amount     float8,
 
     created_at timestamp,
     updated_at timestamp,

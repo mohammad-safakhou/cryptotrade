@@ -3,6 +3,8 @@ package handlers
 import (
 	"context"
 	"crypto/sha256"
+	"cryptotrade/models"
+	"cryptotrade/pkg"
 	"cryptotrade/repository"
 	"cryptotrade/utils"
 	"database/sql"
@@ -23,14 +25,33 @@ type Receiver interface {
 }
 
 type receiverHandler struct {
-	WS        *websocket.Conn
-	TimeFrame TimeFrame
+	WS              *websocket.Conn
+	TimeFrame       models.TimeFrame
+	NumberOfCandles int
 
-	CandlesRepository repository.CandlesRepository
+	MessageBrokerCandleHandler pkg.MessageBrokerHandler
+	CandlesRepository          repository.CandlesRepository
+}
+
+func NewReceiverHandler(
+	WS *websocket.Conn,
+	TimeFrame models.TimeFrame,
+	NumberOfCandles int,
+
+	CandlesRepository repository.CandlesRepository,
+	MessageBrokerCandleHandler pkg.MessageBrokerHandler,
+) Receiver {
+	return &receiverHandler{
+		WS:                         WS,
+		TimeFrame:                  TimeFrame,
+		NumberOfCandles:            NumberOfCandles,
+		CandlesRepository:          CandlesRepository,
+		MessageBrokerCandleHandler: MessageBrokerCandleHandler,
+	}
 }
 
 func (rh *receiverHandler) CallRepeater(ctx context.Context, coin string) {
-	tTimeFrame := TimeFrames[rh.TimeFrame]
+	tTimeFrame := models.TimeFrames[rh.TimeFrame]
 	iTimeFrame := int(tTimeFrame.Seconds())
 	for {
 		now := time.Now()
@@ -53,12 +74,10 @@ func (rh *receiverHandler) CallRepeater(ctx context.Context, coin string) {
 				return
 			}
 
-			var exchangeKLineResponseData ExchangeKLineResponseModel
+			var exchangeKLineResponseData models.ExchangeKLineResponseModel
 			json.Unmarshal(response, &exchangeKLineResponseData)
 
-			// TODO: Push to database
-			// TODO: Push to kafka queue
-			exchangeKLineData := ExchangeKLineModel{
+			exchangeKLineData := models.ExchangeKLineModel{
 				TimeFrame: exchangeKLineResponseData.Data[0][0].(int64),
 				Opening:   exchangeKLineResponseData.Data[0][1].(float64),
 				Closing:   exchangeKLineResponseData.Data[0][2].(float64),
@@ -67,12 +86,24 @@ func (rh *receiverHandler) CallRepeater(ctx context.Context, coin string) {
 				Volume:    exchangeKLineResponseData.Data[0][5].(float64),
 				Amount:    exchangeKLineResponseData.Data[0][6].(float64),
 			}
+
+			// pushing data into data base
 			_, err = rh.CandlesRepository.SaveCandle(ctx, exchangeKLineData)
 			if err != nil {
 				fmt.Println(err)
 			}
 
+			candles, err := rh.CandlesRepository.GetLastNCandles(ctx, rh.NumberOfCandles)
+			if err != nil {
+				fmt.Println(err)
+			}
 
+			// pushing data into kafka
+			b, _ := json.Marshal(candles)
+			err = rh.MessageBrokerCandleHandler.Push(ctx, b)
+			if err != nil {
+				fmt.Println(err)
+			}
 		}()
 	}
 }
@@ -83,14 +114,6 @@ func (rh *receiverHandler) Reader(ctx context.Context) {
 
 func (rh *receiverHandler) Start(ctx context.Context) {
 	panic("implement me")
-}
-
-func NewReceiverHandler(WS *websocket.Conn, TimeFrame TimeFrame, CandlesRepository repository.CandlesRepository) Receiver {
-	return &receiverHandler{
-		WS:                WS,
-		TimeFrame:         TimeFrame,
-		CandlesRepository: CandlesRepository,
-	}
 }
 
 //Access ID

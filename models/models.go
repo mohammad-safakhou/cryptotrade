@@ -1,4 +1,6 @@
-package handlers
+package models
+
+import "time"
 
 type ExchangeKLineResponseModel struct {
 	Code    int             `json:"code"`
@@ -7,6 +9,11 @@ type ExchangeKLineResponseModel struct {
 }
 
 type ExchangeKLineModel struct {
+	Id        int64
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt time.Time
+
 	TimeFrame int64
 	Opening   float64
 	Closing   float64

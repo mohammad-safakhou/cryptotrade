@@ -7,6 +7,8 @@ import (
 	"cryptotrade/repository"
 	"cryptotrade/utils"
 	"github.com/spf13/cobra"
+	"os"
+	"os/signal"
 )
 
 func init() {
@@ -22,7 +24,7 @@ var receiverCmd = &cobra.Command{
 			panic(err)
 		}
 
-		candleKafka, err := pkg.KafkaConnection("localhost", "9092", "candles", 0)
+		candleKafka, err := pkg.KafkaConnection("127.0.0.1", "9092", "candles", 0)
 		if err != nil {
 			panic(err)
 		}
@@ -31,8 +33,12 @@ var receiverCmd = &cobra.Command{
 
 		receiverHandler := handlers.NewReceiverHandler(nil, "1min", 30, candlesRepository, candleKafkaHandler)
 
+		quit := make(chan os.Signal, 1)
+		signal.Notify(quit, os.Interrupt)
+
 		go func(receiverHandler handlers.Receiver) {
 			receiverHandler.CallRepeater(context.Background(), "BTCUSDT")
 		}(receiverHandler)
+		<-quit
 	},
 }

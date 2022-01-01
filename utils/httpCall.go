@@ -10,7 +10,9 @@ import (
 
 func HttpCall(ctx context.Context, url string, authToken string, verb string, payload []byte) (body []byte, httpStatus int, err error) {
 	req, err := http.NewRequestWithContext(ctx, verb, url, bytes.NewBuffer(payload))
-	req.Header.Set("Content-Type", "application/json")
+	if len(payload) > 0 {
+		req.Header.Set("Content-Type", "application/json")
+	}
 	if authToken != "" {
 		req.Header.Set("Authorization", authToken)
 	}

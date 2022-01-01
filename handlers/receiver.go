@@ -3,7 +3,7 @@ package handlers
 import (
 	"context"
 	"crypto/sha256"
-	"cryptotrade/models"
+	"cryptotrade/app_models"
 	"cryptotrade/pkg"
 	"cryptotrade/repository"
 	"cryptotrade/utils"
@@ -26,7 +26,7 @@ type Receiver interface {
 
 type receiverHandler struct {
 	WS              *websocket.Conn
-	TimeFrame       models.TimeFrame
+	TimeFrame       app_models.TimeFrame
 	NumberOfCandles int
 
 	MessageBrokerCandleHandler pkg.MessageBrokerHandler
@@ -35,7 +35,7 @@ type receiverHandler struct {
 
 func NewReceiverHandler(
 	WS *websocket.Conn,
-	TimeFrame models.TimeFrame,
+	TimeFrame app_models.TimeFrame,
 	NumberOfCandles int,
 
 	CandlesRepository repository.CandlesRepository,
@@ -51,60 +51,14 @@ func NewReceiverHandler(
 }
 
 func (rh *receiverHandler) CallRepeater(ctx context.Context, coin string) {
-	tTimeFrame := models.TimeFrames[rh.TimeFrame]
+	tTimeFrame := app_models.TimeFrames[rh.TimeFrame]
 	iTimeFrame := int(tTimeFrame.Seconds())
 	for {
 		now := time.Now()
 		d := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 		<-time.After(time.Duration(iTimeFrame-int(time.Now().Sub(d).Seconds())%iTimeFrame) * time.Second)
 
-		go func() {
-			time.Sleep(1 * time.Second)
-			ctx, f := context.WithTimeout(ctx, 15*time.Second)
-			defer f()
-			response, _, err := utils.HttpCall(
-				ctx,
-				fmt.Sprintf("https://api.coinex.com/v1/market/kline?market=%s&type=%s&limit=%d", coin, rh.TimeFrame, 1),
-				"",
-				"GET",
-				[]byte{},
-			)
-			if err != nil {
-				fmt.Println(err)
-				return
-			}
-
-			var exchangeKLineResponseData models.ExchangeKLineResponseModel
-			json.Unmarshal(response, &exchangeKLineResponseData)
-
-			exchangeKLineData := models.ExchangeKLineModel{
-				TimeFrame: exchangeKLineResponseData.Data[0][0].(int64),
-				Opening:   exchangeKLineResponseData.Data[0][1].(float64),
-				Closing:   exchangeKLineResponseData.Data[0][2].(float64),
-				Highest:   exchangeKLineResponseData.Data[0][3].(float64),
-				Lowest:    exchangeKLineResponseData.Data[0][4].(float64),
-				Volume:    exchangeKLineResponseData.Data[0][5].(float64),
-				Amount:    exchangeKLineResponseData.Data[0][6].(float64),
-			}
-
-			// pushing data into data base
-			_, err = rh.CandlesRepository.SaveCandle(ctx, exchangeKLineData)
-			if err != nil {
-				fmt.Println(err)
-			}
-
-			candles, err := rh.CandlesRepository.GetLastNCandles(ctx, rh.NumberOfCandles)
-			if err != nil {
-				fmt.Println(err)
-			}
-
-			// pushing data into kafka
-			b, _ := json.Marshal(candles)
-			err = rh.MessageBrokerCandleHandler.Push(ctx, b)
-			if err != nil {
-				fmt.Println(err)
-			}
-		}()
+		go rh.callRepeater(ctx, coin)
 	}
 }
 
@@ -114,6 +68,70 @@ func (rh *receiverHandler) Reader(ctx context.Context) {
 
 func (rh *receiverHandler) Start(ctx context.Context) {
 	panic("implement me")
+}
+
+func (rh *receiverHandler) callRepeater(ctx context.Context, coin string) {
+	time.Sleep(4 * time.Second)
+	ctx2, f := context.WithTimeout(ctx, 15*time.Second)
+	defer f()
+	url := fmt.Sprintf("https://api.coinex.com/v1/market/kline?market=%s&type=%s&limit=%d", coin, rh.TimeFrame, rh.NumberOfCandles)
+	response, _, err := utils.HttpCall(
+		ctx2,
+		url,
+		"",
+		"GET",
+		[]byte{},
+	)
+	if err != nil {
+		fmt.Println(err)
+		rh.callRepeater(ctx, coin)
+		return
+	}
+
+	var exchangeKLineResponseData app_models.ExchangeKLineResponseModel
+	json.Unmarshal(response, &exchangeKLineResponseData)
+
+	if exchangeKLineResponseData.Data[rh.NumberOfCandles -1][5] == "0" {
+		rh.callRepeater(ctx, coin)
+		return
+	}
+	if exchangeKLineResponseData.Data[rh.NumberOfCandles-1][6] == "0" {
+		rh.callRepeater(ctx, coin)
+		return
+	}
+
+	var candles []app_models.ExchangeKLineModel
+	for _, item := range exchangeKLineResponseData.Data {
+		candles = append(candles, app_models.ExchangeKLineModel{
+			TimeFrame: item[0].(float64),
+			Opening:   item[1].(string),
+			Closing:   item[2].(string),
+			Highest:   item[3].(string),
+			Lowest:    item[4].(string),
+			Volume:    item[5].(string),
+			Amount:    item[6].(string),
+		})
+	}
+
+	// pushing data into data base
+	//_, err = rh.CandlesRepository.SaveCandle(ctx, exchangeKLineData)
+	//if err != nil {
+	//	fmt.Println(err)
+	//	rh.callRepeater(ctx, coin)
+	//	return
+	//}
+
+	//candles, err := rh.CandlesRepository.GetLastNCandles(ctx, rh.NumberOfCandles)
+	//if err != nil {
+	//	fmt.Println(err)
+	//}
+
+	// pushing data into kafka
+	b, _ := json.Marshal(candles)
+	err = rh.MessageBrokerCandleHandler.Push(ctx, b)
+	if err != nil {
+		fmt.Println(err)
+	}
 }
 
 //Access ID

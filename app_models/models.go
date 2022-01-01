@@ -1,4 +1,4 @@
-package models
+package app_models
 
 import "time"
 
@@ -14,11 +14,11 @@ type ExchangeKLineModel struct {
 	UpdatedAt time.Time
 	DeletedAt time.Time
 
-	TimeFrame int64
-	Opening   float64
-	Closing   float64
-	Highest   float64
-	Lowest    float64
-	Volume    float64
-	Amount    float64
+	TimeFrame float64
+	Opening   string
+	Closing   string
+	Highest   string
+	Lowest    string
+	Volume    string
+	Amount    string
 }

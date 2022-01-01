@@ -2,14 +2,17 @@ package repository
 
 import (
 	"context"
+	"cryptotrade/app_models"
 	"cryptotrade/models"
 	"database/sql"
-	"time"
+	"github.com/volatiletech/null/v8"
+	"github.com/volatiletech/sqlboiler/v4/boil"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
 type CandlesRepository interface {
-	SaveCandle(ctx context.Context, candle models.ExchangeKLineModel) (int64, error)
-	GetLastNCandles(ctx context.Context, n int) ([]models.ExchangeKLineModel, error)
+	SaveCandle(ctx context.Context, candle app_models.ExchangeKLineModel) (int64, error)
+	GetLastNCandles(ctx context.Context, n int) ([]app_models.ExchangeKLineModel, error)
 }
 
 type candlesRepository struct {
@@ -20,33 +23,42 @@ func NewCandlesRepository(db *sql.DB) CandlesRepository {
 	return &candlesRepository{db: db}
 }
 
-func (cr *candlesRepository) SaveCandle(ctx context.Context, candle models.ExchangeKLineModel) (int64, error) {
-	res, err := cr.db.ExecContext(ctx, "INSERT INTO candles_content ("+
-		"time_frame,opening,closing,highest,lowest,volume,amount,created_at,updated_at,deleted_at) VALUES ("+
-		"?,?,?,?,?,?,?,?,?,?)",
-		candle.TimeFrame, candle.Opening, candle.Closing, candle.Highest, candle.Lowest,
-		candle.Volume, candle.Amount, time.Now(), time.Now(), nil)
-	if err != nil {
-		return 0, err
+func (cr *candlesRepository) SaveCandle(ctx context.Context, candle app_models.ExchangeKLineModel) (int64, error) {
+	candleContent := models.CandlesContent{
+		TimeFrame: null.NewFloat64(candle.TimeFrame, true),
+		Opening:   null.NewString(candle.Opening, true),
+		Closing:   null.NewString(candle.Closing, true),
+		Highest:   null.NewString(candle.Highest, true),
+		Lowest:    null.NewString(candle.Lowest, true),
+		Volume:    null.NewString(candle.Volume, true),
+		Amount:    null.NewString(candle.Amount, true),
 	}
-	return res.LastInsertId()
+	err := candleContent.Insert(ctx, cr.db, boil.Infer())
+	if err != nil {
+		return 0, nil
+	}
+	return candleContent.ID, nil
 }
 
-func (cr *candlesRepository) GetLastNCandles(ctx context.Context, n int) ([]models.ExchangeKLineModel, error) {
-	rows, err := cr.db.QueryContext(ctx, "SELECT * FROM candles_content order by id desc limit ?", n)
+func (cr *candlesRepository) GetLastNCandles(ctx context.Context, n int) ([]app_models.ExchangeKLineModel, error) {
+	candles, err := models.CandlesContents(qm.OrderBy("time_frame desc"), qm.Limit(n)).All(ctx, cr.db)
 	if err != nil {
 		return nil, err
 	}
-
-	defer rows.Close()
-
-	var kLines []models.ExchangeKLineModel
-	for rows.Next() {
-		var kLine models.ExchangeKLineModel
-		err = rows.Scan(&kLine.Id, &kLine.TimeFrame, &kLine.Opening, &kLine.Closing, &kLine.Highest, &kLine.Lowest,
-			&kLine.Volume, &kLine.Amount, &kLine.CreatedAt, &kLine.UpdatedAt, &kLine.DeletedAt)
-		if err != nil {
-			return nil, err
+	var kLines []app_models.ExchangeKLineModel
+	for _, item := range candles {
+		var kLine = app_models.ExchangeKLineModel{
+			Id:        item.ID,
+			CreatedAt: item.CreatedAt.Time,
+			UpdatedAt: item.UpdatedAt.Time,
+			DeletedAt: item.DeletedAt.Time,
+			TimeFrame: item.TimeFrame.Float64,
+			Opening:   item.Opening.String,
+			Closing:   item.Closing.String,
+			Highest:   item.Highest.String,
+			Lowest:    item.Lowest.String,
+			Volume:    item.Volume.String,
+			Amount:    item.Amount.String,
 		}
 		kLines = append(kLines, kLine)
 	}

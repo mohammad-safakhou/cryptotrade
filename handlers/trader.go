@@ -17,8 +17,8 @@ type traderHandler struct {
 	MessageBrokerCandleHandler pkg.MessageBrokerHandler
 }
 
-func NewTraderHandler() Trader {
-	return &traderHandler{}
+func NewTraderHandler(messageBrokerCandleHandler pkg.MessageBrokerHandler) Trader {
+	return &traderHandler{MessageBrokerCandleHandler: messageBrokerCandleHandler}
 }
 
 func (t *traderHandler) Handler(ctx context.Context) error {

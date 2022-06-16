@@ -36,7 +36,7 @@ var receiverCmd = &cobra.Command{
 			AllowMethods: []string{echo.GET, echo.HEAD, echo.PUT, echo.PATCH, echo.POST, echo.DELETE},
 		}))
 
-		dbPostgres, err := utils.PostgresConnection("localhost", "5431", "root", "root", "cryptotrade", "disable")
+		dbPostgres, err := utils.PostgresConnection("localhost", "5432", "root", "root", "cryptotrade", "disable")
 		if err != nil {
 			panic(err)
 		}

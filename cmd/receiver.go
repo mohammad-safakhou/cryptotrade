@@ -35,10 +35,7 @@ var receiverCmd = &cobra.Command{
 		// Routes
 		e.POST("/receiver", func(ctx echo.Context) error {
 			bodyBytes, _ := ioutil.ReadAll(ctx.Request().Body)
-			fmt.Println("---")
-			fmt.Println(string(bodyBytes))
-			fmt.Println(ctx.Request().Header)
-			fmt.Println("---")
+			fmt.Printf("%s - %s", time.Now(), string(bodyBytes))
 			//type receiverModel struct {
 			//	Text string `json:"text"`
 			//}

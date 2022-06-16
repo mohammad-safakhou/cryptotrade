@@ -11,7 +11,7 @@ services:
       - cmdrun=receiver
     ports:
       - 443:433
-    command: ["./app", "http"]
+    command: ["./app", "receiver"]
 #  app-tasks:
 #    container_name: automated_test-tasks
 #    restart: always

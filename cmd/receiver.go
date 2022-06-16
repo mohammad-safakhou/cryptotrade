@@ -2,9 +2,11 @@ package cmd
 
 import (
 	"context"
+	"cryptotrade/handlers"
 	"cryptotrade/models"
 	"cryptotrade/utils"
 	"fmt"
+	kucoin "github.com/Kucoin/kucoin-futures-go-sdk"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/spf13/cobra"
@@ -50,6 +52,21 @@ var receiverCmd = &cobra.Command{
 			err := content.Insert(ctx.Request().Context(), dbPostgres, boil.Infer())
 			if err != nil {
 				return ctx.JSON(http.StatusBadRequest, err)
+			}
+			s := kucoin.NewApiService(
+				kucoin.ApiBaseURIOption("https://api-sandbox-futures.kucoin.com"),
+				kucoin.ApiKeyOption("62aba38329c69200011e7f5d"),
+				kucoin.ApiSecretOption("e1fbb51d-b338-4427-8ebf-7bdba7da8c6f"),
+				kucoin.ApiPassPhraseOption("220618"),
+				kucoin.ApiKeyVersionOption("2"),
+			)
+
+			trader := handlers.NewTraderHandler(s)
+			receiver := handlers.NewReceiverHandler(s, trader)
+
+			err = receiver.Handler(ctx.Request().Context(), string(bodyBytes))
+			if err != nil {
+				fmt.Println(err.Error())
 			}
 			//type receiverModel struct {
 			//	Text string `json:"text"`

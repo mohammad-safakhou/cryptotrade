@@ -6,6 +6,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/spf13/cobra"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -33,8 +34,9 @@ var receiverCmd = &cobra.Command{
 
 		// Routes
 		e.POST("/receiver", func(ctx echo.Context) error {
+			bodyBytes, _ := ioutil.ReadAll(ctx.Request().Body)
 			fmt.Println("---")
-			fmt.Println(ctx.Request().Body)
+			fmt.Println(string(bodyBytes))
 			fmt.Println(ctx.Request().Header)
 			fmt.Println("---")
 			//type receiverModel struct {

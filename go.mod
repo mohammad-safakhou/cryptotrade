@@ -3,9 +3,10 @@ module cryptotrade
 go 1.17
 
 require (
+	github.com/Kucoin/kucoin-futures-go-sdk v1.0.6
 	github.com/friendsofgo/errors v0.9.2
 	github.com/go-redis/redis/v8 v8.11.4
-	github.com/gorilla/websocket v1.5.0
+	github.com/google/uuid v1.1.2
 	github.com/labstack/echo/v4 v4.7.2
 	github.com/lib/pq v1.10.4
 	github.com/segmentio/kafka-go v0.4.25
@@ -18,13 +19,13 @@ require (
 )
 
 require (
-	github.com/Kucoin/kucoin-futures-go-sdk v1.0.6 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/gofrs/uuid v3.2.0+incompatible // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/golang/snappy v0.0.3 // indirect
+	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.11 // indirect

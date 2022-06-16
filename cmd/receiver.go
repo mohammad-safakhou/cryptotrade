@@ -46,7 +46,7 @@ var receiverCmd = &cobra.Command{
 			kucoin.ApiBaseURIOption("https://api-sandbox-futures.kucoin.com"),
 			kucoin.ApiKeyOption("62aba38329c69200011e7f5d"),
 			kucoin.ApiSecretOption("e1fbb51d-b338-4427-8ebf-7bdba7da8c6f"),
-			kucoin.ApiPassPhraseOption("220618"),
+			kucoin.ApiPassPhraseOption("TestWow1234"),
 			kucoin.ApiKeyVersionOption("2"),
 		)
 		fmt.Println(KucoinConnection)

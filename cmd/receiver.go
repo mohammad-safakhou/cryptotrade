@@ -2,10 +2,14 @@ package cmd
 
 import (
 	"context"
+	"cryptotrade/models"
+	"cryptotrade/utils"
 	"fmt"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/spf13/cobra"
+	"github.com/volatiletech/null/v8"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -32,10 +36,21 @@ var receiverCmd = &cobra.Command{
 			AllowMethods: []string{echo.GET, echo.HEAD, echo.PUT, echo.PATCH, echo.POST, echo.DELETE},
 		}))
 
+		dbPostgres, err := utils.PostgresConnection("localhost", "5432", "root", "root", "cryptotrade", "disable")
+		if err != nil {
+			panic(err)
+		}
+
 		// Routes
 		e.POST("/receiver", func(ctx echo.Context) error {
 			bodyBytes, _ := ioutil.ReadAll(ctx.Request().Body)
 			fmt.Printf("%s - %s", time.Now(), string(bodyBytes))
+
+			content := models.Content{Data: null.NewString(string(bodyBytes), true)}
+			err := content.Insert(ctx.Request().Context(), dbPostgres, boil.Infer())
+			if err != nil {
+				return ctx.JSON(http.StatusBadRequest, err)
+			}
 			//type receiverModel struct {
 			//	Text string `json:"text"`
 			//}

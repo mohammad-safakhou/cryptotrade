@@ -13,3 +13,12 @@ create table if not exists candles_content
     updated_at timestamp,
     deleted_at timestamp
 );
+
+create table if not exists contents
+(
+    id         BIGSERIAL primary key,
+    data text,
+    created_at timestamp,
+    updated_at timestamp,
+    deleted_at timestamp
+);

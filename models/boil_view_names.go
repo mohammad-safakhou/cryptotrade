@@ -3,10 +3,5 @@
 
 package models
 
-var TableNames = struct {
-	CandlesContent string
-	Contents       string
-}{
-	CandlesContent: "candles_content",
-	Contents:       "contents",
-}
+var ViewNames = struct {
+}{}

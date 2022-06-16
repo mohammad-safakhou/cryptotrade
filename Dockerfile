@@ -4,7 +4,7 @@ FROM dockerhub.ir/golang:1.18 AS builder
 WORKDIR /usr/src/app
 
 COPY . .
-RUN go get -v .
+RUN GOPROXY="goproxy.io" go get -v .
 RUN go build -v -o app
 
 FROM dockerhub.ir/buildpack-deps:buster as app

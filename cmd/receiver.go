@@ -49,6 +49,7 @@ var receiverCmd = &cobra.Command{
 			kucoin.ApiPassPhraseOption("220618"),
 			kucoin.ApiKeyVersionOption("2"),
 		)
+		fmt.Println(KucoinConnection)
 
 		// Routes
 		e.POST("/receiver", func(ctx echo.Context) error {

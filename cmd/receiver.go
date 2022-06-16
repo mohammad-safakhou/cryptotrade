@@ -33,15 +33,19 @@ var receiverCmd = &cobra.Command{
 
 		// Routes
 		e.POST("/receiver", func(ctx echo.Context) error {
-			type receiverModel struct {
-				Text string `json:"text"`
-			}
-			req := new(receiverModel)
-			if err := ctx.Bind(req); err != nil {
-				return ctx.JSON(http.StatusBadRequest, err)
-			}
+			fmt.Println("---")
+			fmt.Println(ctx.Request().Body)
+			fmt.Println(ctx.Request().Header)
+			fmt.Println("---")
+			//type receiverModel struct {
+			//	Text string `json:"text"`
+			//}
+			//req := new(receiverModel)
+			//if err := ctx.Bind(req); err != nil {
+			//	return ctx.JSON(http.StatusBadRequest, err)
+			//}
 
-			fmt.Println(req)
+			//fmt.Println(req)
 			return ctx.JSON(http.StatusOK, "")
 		})
 

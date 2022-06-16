@@ -42,6 +42,13 @@ var receiverCmd = &cobra.Command{
 		if err != nil {
 			panic(err)
 		}
+		KucoinConnection := kucoin.NewApiService(
+			kucoin.ApiBaseURIOption("https://api-sandbox-futures.kucoin.com"),
+			kucoin.ApiKeyOption("62aba38329c69200011e7f5d"),
+			kucoin.ApiSecretOption("e1fbb51d-b338-4427-8ebf-7bdba7da8c6f"),
+			kucoin.ApiPassPhraseOption("220618"),
+			kucoin.ApiKeyVersionOption("2"),
+		)
 
 		// Routes
 		e.POST("/receiver", func(ctx echo.Context) error {
@@ -53,16 +60,10 @@ var receiverCmd = &cobra.Command{
 			if err != nil {
 				return ctx.JSON(http.StatusBadRequest, err)
 			}
-			s := kucoin.NewApiService(
-				kucoin.ApiBaseURIOption("https://api-sandbox-futures.kucoin.com"),
-				kucoin.ApiKeyOption("62aba38329c69200011e7f5d"),
-				kucoin.ApiSecretOption("e1fbb51d-b338-4427-8ebf-7bdba7da8c6f"),
-				kucoin.ApiPassPhraseOption("220618"),
-				kucoin.ApiKeyVersionOption("2"),
-			)
 
-			trader := handlers.NewTraderHandler(s)
-			receiver := handlers.NewReceiverHandler(s, trader)
+
+			trader := handlers.NewTraderHandler(KucoinConnection)
+			receiver := handlers.NewReceiverHandler(KucoinConnection, trader)
 
 			err = receiver.Handler(ctx.Request().Context(), string(bodyBytes))
 			if err != nil {

@@ -10,7 +10,7 @@ services:
     environment:
       - cmdrun=receiver
     ports:
-      - 443:433
+      - 80:80
     command: ["./app", "receiver"]
 #  app-tasks:
 #    container_name: automated_test-tasks

@@ -47,7 +47,7 @@ var receiverCmd = &cobra.Command{
 
 		// Start server
 		go func() {
-			if err := e.Start(":443"); err != nil && err != http.ErrServerClosed {
+			if err := e.Start(":80"); err != nil && err != http.ErrServerClosed {
 				log.Println(err)
 				log.Fatal("shutting down the server")
 			}

@@ -21,15 +21,15 @@ services:
 #    environment:
 #      - cmdrun=tasks
 #    command: ["./app", "tasks"]
-#  psql:
-#    image: dockerhub.ir/postgres:latest
-#    restart: always
-#    network_mode: "host"
-#    environment:
-#      POSTGRES_PASSWORD: root
-#      POSTGRES_USER: root
-#    ports:
-#      - 5431:5432
+  psql:
+    image: postgres:latest
+    restart: always
+    network_mode: "host"
+    environment:
+      POSTGRES_PASSWORD: root
+      POSTGRES_USER: root
+    ports:
+      - 5432:5432
 #  influxdb:
 #    image: dockerhub.ir/influxdb:latest
 #    container_name: influxdb

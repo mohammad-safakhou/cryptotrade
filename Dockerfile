@@ -1,5 +1,5 @@
 # This file is a template, and might need editing before it works on your project.
-FROM dockerhub.ir/golang:1.18 AS builder
+FROM golang:1.18 AS builder
 
 WORKDIR /usr/src/app
 

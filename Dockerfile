@@ -4,10 +4,10 @@ FROM golang:1.18 AS builder
 WORKDIR /usr/src/app
 
 COPY . .
-RUN GOPROXY="goproxy.io" go get -v .
+RUN go get -v .
 RUN go build -v -o app
 
-FROM dockerhub.ir/buildpack-deps:buster as app
+FROM buildpack-deps:buster as app
 
 WORKDIR /usr/local/bin
 RUN mkdir tmp

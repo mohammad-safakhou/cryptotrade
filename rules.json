@@ -1,0 +1,23 @@
+{
+  "main_timeframe": {
+    "time_frame": "5m",
+    "enable_end_of_timeframe": false,
+    "signal_repeats_to_consider": 3
+  },
+  "sub_timeframes": [
+    {
+      "time_frame": "1m",
+      "enable_end_of_timeframe": false,
+      "signal_repeats_to_consider": 3
+    },
+    {
+      "time_frame": "3m",
+      "enable_end_of_timeframe": false,
+      "signal_repeats_to_consider": 3
+    }
+  ],
+  "sub_timeframes_operation": "AND",
+  "stop_loss": 20,
+  "take_profit": 20,
+  "leverage": 10
+}

@@ -33,6 +33,7 @@ func (receiver *receiverHandler) Handler(ctx context.Context, signal string) err
 			Side:      "sell",
 			Symbol:    "XBTUSDTM",
 			Leverage:  "10",
+			Type:      "market",
 		})
 		if err != nil {
 			return err
@@ -45,6 +46,7 @@ func (receiver *receiverHandler) Handler(ctx context.Context, signal string) err
 			Side:      "buy",
 			Symbol:    "XBTUSDTM",
 			Leverage:  "10",
+			Type:      "market",
 		})
 		if err != nil {
 			return err

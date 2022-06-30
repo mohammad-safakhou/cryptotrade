@@ -7,7 +7,7 @@ import (
 
 type Trader interface {
 	Handler(ctx context.Context) error
-	PlaceOrder(ctx context.Context, order Object) (*kucoin.ApiResponse, error)
+	PlaceOrder(ctx context.Context, order Order) (*kucoin.ApiResponse, error)
 	CloseOrder(ctx context.Context) error
 	Exit(ctx context.Context) error
 }
@@ -49,7 +49,7 @@ type PlaceOrderResponse struct {
 	} `json:"data"`
 }
 
-func (t *traderHandler) PlaceOrder(ctx context.Context, order Object) (*kucoin.ApiResponse, error) {
+func (t *traderHandler) PlaceOrder(ctx context.Context, order Order) (*kucoin.ApiResponse, error) {
 	resp, err := t.KucoinService.CreateOrder(map[string]string{
 		"clientOid": order.ClientOId,
 		"side":      order.Side,

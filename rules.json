@@ -23,5 +23,6 @@
   "main_sub_time_frame_operation": "AND",
   "stop_loss": 20,
   "take_profit": 20,
+  "symbol": "XBTUSDTM",
   "leverage": 10
 }

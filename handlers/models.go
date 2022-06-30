@@ -1,7 +1,10 @@
 package handlers
 
 import (
+	kucoin "github.com/Kucoin/kucoin-futures-go-sdk"
+	"github.com/google/uuid"
 	"github.com/volatiletech/null/v8"
+	"strconv"
 	"time"
 )
 
@@ -9,7 +12,19 @@ const (
 	ClientOIdPrefix = "crypto_trader_"
 )
 
-var SharedObject Object
+var SharedObject *Object
+var SharedKuCoinService *kucoin.ApiService
+
+func init() {
+	SharedKuCoinService = kucoin.NewApiService(
+		kucoin.ApiBaseURIOption("https://api-sandbox-futures.kucoin.com"),
+		kucoin.ApiKeyOption("62aba38329c69200011e7f5d"),
+		kucoin.ApiSecretOption("e1fbb51d-b338-4427-8ebf-7bdba7da8c6f"),
+		kucoin.ApiPassPhraseOption("TestWow1234"),
+		kucoin.ApiKeyVersionOption("2"),
+	)
+
+}
 
 type Order struct {
 	ClientOId string `json:"clientOid"`
@@ -40,6 +55,7 @@ type Strategy struct {
 	MainSubTimeFrameOperation string       `json:"main_sub_time_frame_operation"`
 	StopLoss                  int          `json:"stop_loss"`
 	TakeProfit                int          `json:"take_profit"`
+	Symbol                    string       `json:"symbol"`
 	Leverage                  int          `json:"leverage"`
 }
 
@@ -175,7 +191,12 @@ func (o *Object) ClosePositionsExceptLast() {
 }
 
 func (o *Object) OpenPosition(side string) {
-	panic("implement me")
+	response, err := SharedKuCoinService.CreateOrder(map[string]string{
+		"clientOid": ClientOIdPrefix + uuid.New().String(),
+		"side":      side,
+		"symbol":    o.Strategy.Symbol,
+		"leverage":  strconv.Itoa(o.Strategy.Leverage),
+	})
 }
 
 func (o *Object) GetOpenPosition() Position {

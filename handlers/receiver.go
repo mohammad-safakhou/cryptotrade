@@ -28,7 +28,7 @@ func (receiver *receiverHandler) Handler(ctx context.Context, signal string) err
 	switch signal {
 	case "Short 1m":
 		clientId := uuid.New()
-		response, err := receiver.Trader.PlaceOrder(ctx, Object{
+		response, err := receiver.Trader.PlaceOrder(ctx, Order{
 			ClientOId: clientId.String(),
 			Side:      "sell",
 			Symbol:    "XBTUSDTM",
@@ -41,7 +41,7 @@ func (receiver *receiverHandler) Handler(ctx context.Context, signal string) err
 		fmt.Println(response.RawData)
 	case "Buy 1m":
 		clientId := uuid.New()
-		response, err := receiver.Trader.PlaceOrder(ctx, Object{
+		response, err := receiver.Trader.PlaceOrder(ctx, Order{
 			ClientOId: clientId.String(),
 			Side:      "buy",
 			Symbol:    "XBTUSDTM",

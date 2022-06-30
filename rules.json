@@ -19,7 +19,8 @@
       "time_distribution": 40
     }
   ],
-  "sub_timeframes_operation": "AND",
+  "sub_time_frames_operation": "AND",
+  "main_sub_time_frame_operation": "AND",
   "stop_loss": 20,
   "take_profit": 20,
   "leverage": 10

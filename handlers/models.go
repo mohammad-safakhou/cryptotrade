@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/volatiletech/null/v8"
 	"time"
 )
 
@@ -33,12 +34,13 @@ type Action struct {
 }
 
 type Strategy struct {
-	MainTimeFrame          *TimeFrame   `json:"main_time_frame"`
-	SubTimeFrames          []*TimeFrame `json:"sub_time_frames"`
-	SubTimeFramesOperation string       `json:"sub_time_frames_operation"`
-	StopLoss               int          `json:"stop_loss"`
-	TakeProfit             int          `json:"take_profit"`
-	Leverage               int          `json:"leverage"`
+	MainTimeFrame             *TimeFrame   `json:"main_time_frame"`
+	SubTimeFrames             []*TimeFrame `json:"sub_time_frames"`
+	SubTimeFramesOperation    string       `json:"sub_time_frames_operation"`
+	MainSubTimeFrameOperation string       `json:"main_sub_time_frame_operation"`
+	StopLoss                  int          `json:"stop_loss"`
+	TakeProfit                int          `json:"take_profit"`
+	Leverage                  int          `json:"leverage"`
 }
 
 type TimeFrame struct {
@@ -83,11 +85,10 @@ func (o *Object) ResumeStrategy() {
 
 func (o *Object) ActionHandler() {
 	for action := range o.Action {
+		o.CloseAllPositions()
 		if o.Exit {
-			o.CloseAllPositions()
 			continue
 		}
-		o.CloseAllPositions()
 		o.OpenPosition(action.Side)
 	}
 }
@@ -95,6 +96,7 @@ func (o *Object) ActionHandler() {
 func (o *Object) SendAction() {
 	o.ClosePositionsExceptLast()
 	position := o.GetOpenPosition()
+	var subTimeFrameResults = null.NewBool(false, false)
 
 	if len(o.Strategy.SubTimeFrames) != 0 {
 		var listOfSubResults []bool
@@ -102,6 +104,44 @@ func (o *Object) SendAction() {
 			listOfSubResults = append(listOfSubResults, TimeFrameHandler(value))
 		}
 
+		switch o.Strategy.SubTimeFramesOperation {
+		case "AND":
+			subTimeFrameResults = null.NewBool(AndOfArray(listOfSubResults), true)
+		case "OR":
+			subTimeFrameResults = null.NewBool(OrOfArray(listOfSubResults), true)
+		default:
+			subTimeFrameResults = null.NewBool(AndOfArray(listOfSubResults), true)
+		}
+	}
+
+	mainResult := TimeFrameHandler(o.Strategy.MainTimeFrame)
+
+	var action string
+	if !subTimeFrameResults.IsZero() {
+		switch o.Strategy.MainSubTimeFrameOperation {
+		case "AND":
+			if mainResult && subTimeFrameResults.Bool {
+				action = "buy"
+			} else {
+				action = "sell"
+			}
+		case "OR":
+			if mainResult || subTimeFrameResults.Bool {
+				action = "buy"
+			} else {
+				action = "sell"
+			}
+		}
+	} else {
+		if mainResult {
+			action = "buy"
+		} else {
+			action = "sell"
+		}
+	}
+
+	if position.Side != action {
+		o.Action <- &Action{Side: action}
 	}
 }
 
@@ -241,4 +281,20 @@ func TimeFrameHandler(timeFrame *TimeFrame) bool {
 			return false
 		}
 	}
+}
+
+func AndOfArray(array []bool) bool {
+	result := array[0]
+	for _, v := range array[1:] {
+		result = result && v
+	}
+	return result
+}
+
+func OrOfArray(array []bool) bool {
+	result := array[0]
+	for _, v := range array[1:] {
+		result = result || v
+	}
+	return result
 }

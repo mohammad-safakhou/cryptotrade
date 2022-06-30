@@ -6,8 +6,6 @@ import (
 	"cryptotrade/models"
 	"cryptotrade/utils"
 	"encoding/json"
-	"fmt"
-	kucoin "github.com/Kucoin/kucoin-futures-go-sdk"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/spf13/cobra"
@@ -23,12 +21,15 @@ import (
 
 func init() {
 	rootCmd.AddCommand(receiverCmd)
+	receiverCmd.Flags().String("server-port", "10000", "Setting http server port")
 }
 
 var receiverCmd = &cobra.Command{
 	Use:   "receiver",
 	Short: "Starting candle receiver",
 	Run: func(cmd *cobra.Command, args []string) {
+		serverPort, err := cmd.Flags().GetString("server-port")
+
 		e := echo.New()
 
 		// Middleware
@@ -43,14 +44,6 @@ var receiverCmd = &cobra.Command{
 		if err != nil {
 			panic(err)
 		}
-		KucoinConnection := kucoin.NewApiService(
-			kucoin.ApiBaseURIOption("https://api-sandbox-futures.kucoin.com"),
-			kucoin.ApiKeyOption("62aba38329c69200011e7f5d"),
-			kucoin.ApiSecretOption("e1fbb51d-b338-4427-8ebf-7bdba7da8c6f"),
-			kucoin.ApiPassPhraseOption("TestWow1234"),
-			kucoin.ApiKeyVersionOption("2"),
-		)
-		fmt.Println(KucoinConnection)
 
 		strategy, err := models.Strategies(models.StrategyWhere.Name.EQ(null.NewString("main", true))).One(context.TODO(), dbPostgres)
 		if err != nil {
@@ -63,7 +56,8 @@ var receiverCmd = &cobra.Command{
 			panic(err)
 		}
 
-		handlers.SharedObject = handlers.Object{
+		handlers.SharedObject = &handlers.Object{
+			Exit:     false,
 			Strategy: &strat,
 			Action:   make(chan *handlers.Action, 100),
 		}
@@ -71,13 +65,6 @@ var receiverCmd = &cobra.Command{
 		// Routes
 		e.POST("/receiver", func(ctx echo.Context) error {
 			bodyBytes, _ := ioutil.ReadAll(ctx.Request().Body)
-			fmt.Printf("%s - %s", time.Now(), string(bodyBytes))
-
-			content := models.Content{Data: null.NewString(string(bodyBytes), true)}
-			err := content.Insert(ctx.Request().Context(), dbPostgres, boil.Infer())
-			if err != nil {
-				return ctx.JSON(http.StatusBadRequest, err)
-			}
 
 			var signal handlers.Signals
 			err = json.Unmarshal(bodyBytes, &signal)
@@ -85,31 +72,27 @@ var receiverCmd = &cobra.Command{
 				log.Println(err.Error())
 				return err
 			}
+			handlers.SharedObject.ReceiveSignal(&signal)
 
-			signal.ReceiveSignal()
-
-			trader := handlers.NewTraderHandler(KucoinConnection)
-			receiver := handlers.NewReceiverHandler(KucoinConnection, trader)
-
-			err = receiver.Handler(ctx.Request().Context(), string(bodyBytes))
+			content := models.Content{Data: null.NewString(string(bodyBytes), true)}
+			err := content.Insert(ctx.Request().Context(), dbPostgres, boil.Infer())
 			if err != nil {
-				fmt.Println(err.Error())
+				return ctx.JSON(http.StatusBadRequest, err)
 			}
-			//type receiverModel struct {
-			//	Text string `json:"text"`
-			//}
-			//req := new(receiverModel)
-			//if err := ctx.Bind(req); err != nil {
-			//	return ctx.JSON(http.StatusBadRequest, err)
-			//}
-
-			//fmt.Println(req)
 			return ctx.JSON(http.StatusOK, "")
+		})
+		e.GET("/exit", func(ctx echo.Context) error {
+			handlers.SharedObject.StopStrategy()
+			return ctx.JSON(http.StatusOK, "successfully stopped the bot, you can resume it by calling resume route")
+		})
+		e.GET("/resume", func(ctx echo.Context) error {
+			handlers.SharedObject.ResumeStrategy()
+			return ctx.JSON(http.StatusOK, "resumed the bot")
 		})
 
 		// Start server
 		go func() {
-			if err := e.Start(":10000"); err != nil && err != http.ErrServerClosed {
+			if err := e.Start(":" + serverPort); err != nil && err != http.ErrServerClosed {
 				log.Println(err)
 				log.Fatal("shutting down the server")
 			}
@@ -124,27 +107,5 @@ var receiverCmd = &cobra.Command{
 		if err := e.Shutdown(ctx); err != nil {
 			e.Logger.Fatal(err)
 		}
-
-		//dbPostgres, err := utils.PostgresConnection("localhost", "5432", "root", "root", "cryptotrade", "disable")
-		//if err != nil {
-		//	panic(err)
-		//}
-		//
-		//candleKafka, err := pkg.KafkaConnection("127.0.0.1", "9092", "candles", 0)
-		//if err != nil {
-		//	panic(err)
-		//}
-		//candleKafkaHandler := pkg.NewKafkaHandler(candleKafka)
-		//candlesRepository := repository.NewCandlesRepository(dbPostgres)
-		//
-		//receiverHandler := handlers.NewReceiverHandler(nil, "1min", 30, candlesRepository, candleKafkaHandler)
-		//
-		//quit := make(chan os.Signal, 1)
-		//signal.Notify(quit, os.Interrupt)
-		//
-		//go func(receiverHandler handlers.Receiver) {
-		//	receiverHandler.CallRepeater(context.Background(), "BTCUSDT")
-		//}(receiverHandler)
-		//<-quit
 	},
 }

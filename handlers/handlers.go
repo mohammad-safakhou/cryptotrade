@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"encoding/json"
 	kucoin "github.com/Kucoin/kucoin-futures-go-sdk"
+	"github.com/google/martian/log"
 	"github.com/google/uuid"
 	"github.com/volatiletech/null/v8"
 	"strconv"
@@ -9,7 +11,7 @@ import (
 )
 
 const (
-	ClientOIdPrefix = "crypto_trader_"
+	ClientOIdPrefix = "trader_"
 )
 
 var SharedObject *Object
@@ -17,25 +19,75 @@ var SharedKuCoinService *kucoin.ApiService
 
 func init() {
 	SharedKuCoinService = kucoin.NewApiService(
-		kucoin.ApiBaseURIOption("https://api-sandbox-futures.kucoin.com"),
-		kucoin.ApiKeyOption("62aba38329c69200011e7f5d"),
-		kucoin.ApiSecretOption("e1fbb51d-b338-4427-8ebf-7bdba7da8c6f"),
+		kucoin.ApiBaseURIOption("https://api-futures.kucoin.com"),
+		kucoin.ApiKeyOption("62ab98e10d472900012cd167"),
+		kucoin.ApiSecretOption("a068883d-7400-4d3d-b997-e3e473abec17"),
 		kucoin.ApiPassPhraseOption("TestWow1234"),
 		kucoin.ApiKeyVersionOption("2"),
 	)
 
 }
 
-type Order struct {
-	ClientOId string `json:"clientOid"`
-	Side      string `json:"side"`
-	Symbol    string `json:"symbol"`
-	Leverage  string `json:"leverage"`
-	Type      string `json:"type"`
+type Position struct {
+	ID                string  `json:"id"`
+	Symbol            string  `json:"symbol"`
+	AutoDeposit       bool    `json:"autoDeposit"`
+	MaintMarginReq    float64 `json:"maintMarginReq"`
+	RiskLimit         int     `json:"riskLimit"`
+	RealLeverage      float64 `json:"realLeverage"`
+	CrossMode         bool    `json:"crossMode"`
+	DelevPercentage   float64 `json:"delevPercentage"`
+	OpeningTimestamp  int64   `json:"openingTimestamp"`
+	CurrentTimestamp  int64   `json:"currentTimestamp"`
+	CurrentQty        int     `json:"currentQty"`
+	CurrentCost       float64 `json:"currentCost"`
+	CurrentComm       float64 `json:"currentComm"`
+	UnrealisedCost    float64 `json:"unrealisedCost"`
+	RealisedGrossCost int     `json:"realisedGrossCost"`
+	RealisedCost      float64 `json:"realisedCost"`
+	IsOpen            bool    `json:"isOpen"`
+	MarkPrice         float64 `json:"markPrice"`
+	MarkValue         float64 `json:"markValue"`
+	PosCost           float64 `json:"posCost"`
+	PosCross          int     `json:"posCross"`
+	PosInit           float64 `json:"posInit"`
+	PosComm           float64 `json:"posComm"`
+	PosLoss           int     `json:"posLoss"`
+	PosMargin         float64 `json:"posMargin"`
+	PosMaint          float64 `json:"posMaint"`
+	MaintMargin       float64 `json:"maintMargin"`
+	RealisedGrossPnl  int     `json:"realisedGrossPnl"`
+	RealisedPnl       float64 `json:"realisedPnl"`
+	UnrealisedPnl     float64 `json:"unrealisedPnl"`
+	UnrealisedPnlPcnt float64 `json:"unrealisedPnlPcnt"`
+	UnrealisedRoePcnt float64 `json:"unrealisedRoePcnt"`
+	AvgEntryPrice     float64 `json:"avgEntryPrice"`
+	LiquidationPrice  float64 `json:"liquidationPrice"`
+	BankruptPrice     float64 `json:"bankruptPrice"`
+	SettleCurrency    string  `json:"settleCurrency"`
+	MaintainMargin    float64 `json:"maintainMargin"`
+	RiskLimitLevel    int     `json:"riskLimitLevel"`
+
+	Side string `json:"side"`
 }
 
-type Position struct {
-	Side string `json:"side"`
+type Account struct {
+	AccountEquity    float64 `json:"accountEquity"`
+	UnrealisedPNL    float64 `json:"unrealisedPNL"`
+	MarginBalance    float64 `json:"marginBalance"`
+	PositionMargin   float64 `json:"positionMargin"`
+	OrderMargin      int     `json:"orderMargin"`
+	FrozenFunds      int     `json:"frozenFunds"`
+	AvailableBalance float64 `json:"availableBalance"`
+	Currency         string  `json:"currency"`
+}
+
+type Market struct {
+	Symbol      string  `json:"symbol"`
+	Granularity int     `json:"granularity"`
+	TimePoint   int64   `json:"timePoint"`
+	Value       float64 `json:"value"`
+	IndexPrice  float64 `json:"indexPrice"`
 }
 
 type Object struct {
@@ -57,6 +109,8 @@ type Strategy struct {
 	TakeProfit                int          `json:"take_profit"`
 	Symbol                    string       `json:"symbol"`
 	Leverage                  int          `json:"leverage"`
+	SizePercent               int          `json:"size_percent"`
+	Currency                  string       `json:"currency"`
 }
 
 type TimeFrame struct {
@@ -91,7 +145,7 @@ type WeightedSignals struct {
 }
 
 func (o *Object) StopStrategy() {
-	o.CloseAllPositions()
+	o.ClosePosition()
 	o.Exit = true
 }
 
@@ -101,7 +155,7 @@ func (o *Object) ResumeStrategy() {
 
 func (o *Object) ActionHandler() {
 	for action := range o.Action {
-		o.CloseAllPositions()
+		o.ClosePosition()
 		if o.Exit {
 			continue
 		}
@@ -110,7 +164,6 @@ func (o *Object) ActionHandler() {
 }
 
 func (o *Object) SendAction() {
-	o.ClosePositionsExceptLast()
 	position := o.GetOpenPosition()
 	var subTimeFrameResults = null.NewBool(false, false)
 
@@ -182,25 +235,77 @@ func (o *Object) AddToSub(signal *Signals) {
 	}
 }
 
-func (o *Object) CloseAllPositions() {
-	panic("implement me")
-}
-
-func (o *Object) ClosePositionsExceptLast() {
-	panic("implement me")
-}
-
-func (o *Object) OpenPosition(side string) {
+func (o *Object) ClosePosition() {
+	position := o.GetOpenPosition()
+	side := "buy"
+	if position.Side == "buy" {
+		side = "sell"
+	}
 	response, err := SharedKuCoinService.CreateOrder(map[string]string{
-		"clientOid": ClientOIdPrefix + uuid.New().String(),
+		"clientOid": uuid.New().String(),
 		"side":      side,
 		"symbol":    o.Strategy.Symbol,
 		"leverage":  strconv.Itoa(o.Strategy.Leverage),
+		"type":      "market",
+		"size":      strconv.Itoa(position.CurrentQty),
 	})
+	if err != nil {
+		log.Errorf("problem in placing order: %v", err)
+		log.Errorf("problem in placing order: %v", response)
+	}
 }
 
-func (o *Object) GetOpenPosition() Position {
-	panic("implement me")
+func (o *Object) OpenPosition(side string) {
+	account := o.GetAccountOverView()
+	market := o.MarketPrice()
+	size := int(float64(o.Strategy.SizePercent) / 100 * (account.AvailableBalance / market.Value * float64(o.Strategy.Leverage)) * 1000)
+	response, err := SharedKuCoinService.CreateOrder(map[string]string{
+		"clientOid": uuid.New().String(),
+		"side":      side,
+		"symbol":    o.Strategy.Symbol,
+		"leverage":  strconv.Itoa(o.Strategy.Leverage),
+		"type":      "market",
+		"size":      strconv.Itoa(size),
+	})
+	if err != nil {
+		log.Errorf("problem in placing order: %v", err)
+		log.Errorf("problem in placing order: %v", response)
+	}
+}
+
+func (o *Object) GetOpenPosition() (position Position) {
+	resp, err := SharedKuCoinService.Position(o.Strategy.Symbol)
+	if err != nil {
+		log.Errorf("problem in calling get position, %v", err)
+		return Position{}
+	}
+	json.Unmarshal(resp.RawData, &position)
+
+	if position.CurrentQty < 0 {
+		position.Side = "sell"
+	} else {
+		position.Side = "buy"
+	}
+	return position
+}
+
+func (o *Object) GetAccountOverView() (account Account) {
+	response, err := SharedKuCoinService.AccountOverview(map[string]string{"currency": o.Strategy.Currency})
+	if err != nil {
+		log.Errorf("problem in calling get account, %v", err)
+		return Account{}
+	}
+	json.Unmarshal(response.RawData, &account)
+	return account
+}
+
+func (o *Object) MarketPrice() (market Market) {
+	response, err := SharedKuCoinService.MarkPrice(o.Strategy.Symbol)
+	if err != nil {
+		log.Errorf("problem in calling get account, %v", err)
+	}
+	json.Unmarshal(response.RawData, &market)
+	return market
 }
 
 func GetLastEndOfTimeFrameSignal(signals []*Signals) *Signals {
@@ -274,7 +379,11 @@ func TimeFrameHandler(timeFrame *TimeFrame) bool {
 			}
 
 			if timeDistanceTillNow >= timeDistribution {
-				weight = timeDistribution - affectedSignals[len(affectedSignals)-1].Weight
+				if len(affectedSignals) == 0 {
+					weight = timeDistribution
+				} else {
+					weight = timeDistribution - affectedSignals[len(affectedSignals)-1].Weight
+				}
 				affectedSignals = append(affectedSignals, WeightedSignals{
 					Signals: timeFrame.Storage.Signals[i],
 					Weight:  weight,

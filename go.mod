@@ -6,6 +6,7 @@ require (
 	github.com/Kucoin/kucoin-futures-go-sdk v1.0.6
 	github.com/friendsofgo/errors v0.9.2
 	github.com/go-redis/redis/v8 v8.11.4
+	github.com/google/martian v2.1.0+incompatible
 	github.com/google/uuid v1.1.2
 	github.com/labstack/echo/v4 v4.7.2
 	github.com/lib/pq v1.10.4

@@ -5,6 +5,7 @@ import (
 	"cryptotrade/handlers"
 	"cryptotrade/models"
 	"cryptotrade/utils"
+	"encoding/json"
 	"fmt"
 	kucoin "github.com/Kucoin/kucoin-futures-go-sdk"
 	"github.com/labstack/echo/v4"
@@ -51,6 +52,22 @@ var receiverCmd = &cobra.Command{
 		)
 		fmt.Println(KucoinConnection)
 
+		strategy, err := models.Strategies(models.StrategyWhere.Name.EQ(null.NewString("main", true))).One(context.TODO(), dbPostgres)
+		if err != nil {
+			panic(err)
+		}
+
+		var strat handlers.Strategy
+		err = json.Unmarshal([]byte(strategy.Data.String), &strat)
+		if err != nil {
+			panic(err)
+		}
+
+		handlers.SharedObject = handlers.Object{
+			Strategy: &strat,
+			Action:   make(chan *handlers.Action, 100),
+		}
+
 		// Routes
 		e.POST("/receiver", func(ctx echo.Context) error {
 			bodyBytes, _ := ioutil.ReadAll(ctx.Request().Body)
@@ -62,6 +79,14 @@ var receiverCmd = &cobra.Command{
 				return ctx.JSON(http.StatusBadRequest, err)
 			}
 
+			var signal handlers.Signals
+			err = json.Unmarshal(bodyBytes, &signal)
+			if err != nil {
+				log.Println(err.Error())
+				return err
+			}
+
+			signal.ReceiveSignal()
 
 			trader := handlers.NewTraderHandler(KucoinConnection)
 			receiver := handlers.NewReceiverHandler(KucoinConnection, trader)

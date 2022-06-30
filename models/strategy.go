@@ -22,109 +22,116 @@ import (
 	"github.com/volatiletech/strmangle"
 )
 
-// Content is an object representing the database table.
-type Content struct {
-	ID        int64       `boil:"id" json:"id" toml:"id" yaml:"id"`
+// Strategy is an object representing the database table.
+type Strategy struct {
+	ID        int         `boil:"id" json:"id" toml:"id" yaml:"id"`
+	Name      null.String `boil:"name" json:"name,omitempty" toml:"name" yaml:"name,omitempty"`
 	Data      null.String `boil:"data" json:"data,omitempty" toml:"data" yaml:"data,omitempty"`
 	CreatedAt null.Time   `boil:"created_at" json:"created_at,omitempty" toml:"created_at" yaml:"created_at,omitempty"`
 	UpdatedAt null.Time   `boil:"updated_at" json:"updated_at,omitempty" toml:"updated_at" yaml:"updated_at,omitempty"`
 	DeletedAt null.Time   `boil:"deleted_at" json:"deleted_at,omitempty" toml:"deleted_at" yaml:"deleted_at,omitempty"`
 
-	R *contentR `boil:"-" json:"-" toml:"-" yaml:"-"`
-	L contentL  `boil:"-" json:"-" toml:"-" yaml:"-"`
+	R *strategyR `boil:"-" json:"-" toml:"-" yaml:"-"`
+	L strategyL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
-var ContentColumns = struct {
+var StrategyColumns = struct {
 	ID        string
+	Name      string
 	Data      string
 	CreatedAt string
 	UpdatedAt string
 	DeletedAt string
 }{
 	ID:        "id",
+	Name:      "name",
 	Data:      "data",
 	CreatedAt: "created_at",
 	UpdatedAt: "updated_at",
 	DeletedAt: "deleted_at",
 }
 
-var ContentTableColumns = struct {
+var StrategyTableColumns = struct {
 	ID        string
+	Name      string
 	Data      string
 	CreatedAt string
 	UpdatedAt string
 	DeletedAt string
 }{
-	ID:        "contents.id",
-	Data:      "contents.data",
-	CreatedAt: "contents.created_at",
-	UpdatedAt: "contents.updated_at",
-	DeletedAt: "contents.deleted_at",
+	ID:        "strategy.id",
+	Name:      "strategy.name",
+	Data:      "strategy.data",
+	CreatedAt: "strategy.created_at",
+	UpdatedAt: "strategy.updated_at",
+	DeletedAt: "strategy.deleted_at",
 }
 
 // Generated where
 
-var ContentWhere = struct {
-	ID        whereHelperint64
+var StrategyWhere = struct {
+	ID        whereHelperint
+	Name      whereHelpernull_String
 	Data      whereHelpernull_String
 	CreatedAt whereHelpernull_Time
 	UpdatedAt whereHelpernull_Time
 	DeletedAt whereHelpernull_Time
 }{
-	ID:        whereHelperint64{field: "\"contents\".\"id\""},
-	Data:      whereHelpernull_String{field: "\"contents\".\"data\""},
-	CreatedAt: whereHelpernull_Time{field: "\"contents\".\"created_at\""},
-	UpdatedAt: whereHelpernull_Time{field: "\"contents\".\"updated_at\""},
-	DeletedAt: whereHelpernull_Time{field: "\"contents\".\"deleted_at\""},
+	ID:        whereHelperint{field: "\"strategy\".\"id\""},
+	Name:      whereHelpernull_String{field: "\"strategy\".\"name\""},
+	Data:      whereHelpernull_String{field: "\"strategy\".\"data\""},
+	CreatedAt: whereHelpernull_Time{field: "\"strategy\".\"created_at\""},
+	UpdatedAt: whereHelpernull_Time{field: "\"strategy\".\"updated_at\""},
+	DeletedAt: whereHelpernull_Time{field: "\"strategy\".\"deleted_at\""},
 }
 
-// ContentRels is where relationship names are stored.
-var ContentRels = struct {
+// StrategyRels is where relationship names are stored.
+var StrategyRels = struct {
 }{}
 
-// contentR is where relationships are stored.
-type contentR struct {
+// strategyR is where relationships are stored.
+type strategyR struct {
 }
 
 // NewStruct creates a new relationship struct
-func (*contentR) NewStruct() *contentR {
-	return &contentR{}
+func (*strategyR) NewStruct() *strategyR {
+	return &strategyR{}
 }
 
-// contentL is where Load methods for each relationship are stored.
-type contentL struct{}
+// strategyL is where Load methods for each relationship are stored.
+type strategyL struct{}
 
 var (
-	contentAllColumns            = []string{"id", "data", "created_at", "updated_at", "deleted_at"}
-	contentColumnsWithoutDefault = []string{}
-	contentColumnsWithDefault    = []string{"id", "data", "created_at", "updated_at", "deleted_at"}
-	contentPrimaryKeyColumns     = []string{"id"}
-	contentGeneratedColumns      = []string{}
+	strategyAllColumns            = []string{"id", "name", "data", "created_at", "updated_at", "deleted_at"}
+	strategyColumnsWithoutDefault = []string{}
+	strategyColumnsWithDefault    = []string{"id", "name", "data", "created_at", "updated_at", "deleted_at"}
+	strategyPrimaryKeyColumns     = []string{"id"}
+	strategyGeneratedColumns      = []string{}
 )
 
 type (
-	// ContentSlice is an alias for a slice of pointers to Content.
-	// This should almost always be used instead of []Content.
-	ContentSlice []*Content
-	// ContentHook is the signature for custom Content hook methods
-	ContentHook func(context.Context, boil.ContextExecutor, *Content) error
+	// StrategySlice is an alias for a slice of pointers to Strategy.
+	// This should almost always be used instead of []Strategy.
+	StrategySlice []*Strategy
+	// StrategyHook is the signature for custom Strategy hook methods
+	StrategyHook func(context.Context, boil.ContextExecutor, *Strategy) error
 
-	contentQuery struct {
+	strategyQuery struct {
 		*queries.Query
 	}
 )
 
 // Cache for insert, update and upsert
 var (
-	contentType                 = reflect.TypeOf(&Content{})
-	contentMapping              = queries.MakeStructMapping(contentType)
-	contentPrimaryKeyMapping, _ = queries.BindMapping(contentType, contentMapping, contentPrimaryKeyColumns)
-	contentInsertCacheMut       sync.RWMutex
-	contentInsertCache          = make(map[string]insertCache)
-	contentUpdateCacheMut       sync.RWMutex
-	contentUpdateCache          = make(map[string]updateCache)
-	contentUpsertCacheMut       sync.RWMutex
-	contentUpsertCache          = make(map[string]insertCache)
+	strategyType                 = reflect.TypeOf(&Strategy{})
+	strategyMapping              = queries.MakeStructMapping(strategyType)
+	strategyPrimaryKeyMapping, _ = queries.BindMapping(strategyType, strategyMapping, strategyPrimaryKeyColumns)
+	strategyInsertCacheMut       sync.RWMutex
+	strategyInsertCache          = make(map[string]insertCache)
+	strategyUpdateCacheMut       sync.RWMutex
+	strategyUpdateCache          = make(map[string]updateCache)
+	strategyUpsertCacheMut       sync.RWMutex
+	strategyUpsertCache          = make(map[string]insertCache)
 )
 
 var (
@@ -135,27 +142,27 @@ var (
 	_ = qmhelper.Where
 )
 
-var contentAfterSelectHooks []ContentHook
+var strategyAfterSelectHooks []StrategyHook
 
-var contentBeforeInsertHooks []ContentHook
-var contentAfterInsertHooks []ContentHook
+var strategyBeforeInsertHooks []StrategyHook
+var strategyAfterInsertHooks []StrategyHook
 
-var contentBeforeUpdateHooks []ContentHook
-var contentAfterUpdateHooks []ContentHook
+var strategyBeforeUpdateHooks []StrategyHook
+var strategyAfterUpdateHooks []StrategyHook
 
-var contentBeforeDeleteHooks []ContentHook
-var contentAfterDeleteHooks []ContentHook
+var strategyBeforeDeleteHooks []StrategyHook
+var strategyAfterDeleteHooks []StrategyHook
 
-var contentBeforeUpsertHooks []ContentHook
-var contentAfterUpsertHooks []ContentHook
+var strategyBeforeUpsertHooks []StrategyHook
+var strategyAfterUpsertHooks []StrategyHook
 
 // doAfterSelectHooks executes all "after Select" hooks.
-func (o *Content) doAfterSelectHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *Strategy) doAfterSelectHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range contentAfterSelectHooks {
+	for _, hook := range strategyAfterSelectHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -165,12 +172,12 @@ func (o *Content) doAfterSelectHooks(ctx context.Context, exec boil.ContextExecu
 }
 
 // doBeforeInsertHooks executes all "before insert" hooks.
-func (o *Content) doBeforeInsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *Strategy) doBeforeInsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range contentBeforeInsertHooks {
+	for _, hook := range strategyBeforeInsertHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -180,12 +187,12 @@ func (o *Content) doBeforeInsertHooks(ctx context.Context, exec boil.ContextExec
 }
 
 // doAfterInsertHooks executes all "after Insert" hooks.
-func (o *Content) doAfterInsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *Strategy) doAfterInsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range contentAfterInsertHooks {
+	for _, hook := range strategyAfterInsertHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -195,12 +202,12 @@ func (o *Content) doAfterInsertHooks(ctx context.Context, exec boil.ContextExecu
 }
 
 // doBeforeUpdateHooks executes all "before Update" hooks.
-func (o *Content) doBeforeUpdateHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *Strategy) doBeforeUpdateHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range contentBeforeUpdateHooks {
+	for _, hook := range strategyBeforeUpdateHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -210,12 +217,12 @@ func (o *Content) doBeforeUpdateHooks(ctx context.Context, exec boil.ContextExec
 }
 
 // doAfterUpdateHooks executes all "after Update" hooks.
-func (o *Content) doAfterUpdateHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *Strategy) doAfterUpdateHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range contentAfterUpdateHooks {
+	for _, hook := range strategyAfterUpdateHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -225,12 +232,12 @@ func (o *Content) doAfterUpdateHooks(ctx context.Context, exec boil.ContextExecu
 }
 
 // doBeforeDeleteHooks executes all "before Delete" hooks.
-func (o *Content) doBeforeDeleteHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *Strategy) doBeforeDeleteHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range contentBeforeDeleteHooks {
+	for _, hook := range strategyBeforeDeleteHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -240,12 +247,12 @@ func (o *Content) doBeforeDeleteHooks(ctx context.Context, exec boil.ContextExec
 }
 
 // doAfterDeleteHooks executes all "after Delete" hooks.
-func (o *Content) doAfterDeleteHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *Strategy) doAfterDeleteHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range contentAfterDeleteHooks {
+	for _, hook := range strategyAfterDeleteHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -255,12 +262,12 @@ func (o *Content) doAfterDeleteHooks(ctx context.Context, exec boil.ContextExecu
 }
 
 // doBeforeUpsertHooks executes all "before Upsert" hooks.
-func (o *Content) doBeforeUpsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *Strategy) doBeforeUpsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range contentBeforeUpsertHooks {
+	for _, hook := range strategyBeforeUpsertHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -270,12 +277,12 @@ func (o *Content) doBeforeUpsertHooks(ctx context.Context, exec boil.ContextExec
 }
 
 // doAfterUpsertHooks executes all "after Upsert" hooks.
-func (o *Content) doAfterUpsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *Strategy) doAfterUpsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range contentAfterUpsertHooks {
+	for _, hook := range strategyAfterUpsertHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -284,33 +291,33 @@ func (o *Content) doAfterUpsertHooks(ctx context.Context, exec boil.ContextExecu
 	return nil
 }
 
-// AddContentHook registers your hook function for all future operations.
-func AddContentHook(hookPoint boil.HookPoint, contentHook ContentHook) {
+// AddStrategyHook registers your hook function for all future operations.
+func AddStrategyHook(hookPoint boil.HookPoint, strategyHook StrategyHook) {
 	switch hookPoint {
 	case boil.AfterSelectHook:
-		contentAfterSelectHooks = append(contentAfterSelectHooks, contentHook)
+		strategyAfterSelectHooks = append(strategyAfterSelectHooks, strategyHook)
 	case boil.BeforeInsertHook:
-		contentBeforeInsertHooks = append(contentBeforeInsertHooks, contentHook)
+		strategyBeforeInsertHooks = append(strategyBeforeInsertHooks, strategyHook)
 	case boil.AfterInsertHook:
-		contentAfterInsertHooks = append(contentAfterInsertHooks, contentHook)
+		strategyAfterInsertHooks = append(strategyAfterInsertHooks, strategyHook)
 	case boil.BeforeUpdateHook:
-		contentBeforeUpdateHooks = append(contentBeforeUpdateHooks, contentHook)
+		strategyBeforeUpdateHooks = append(strategyBeforeUpdateHooks, strategyHook)
 	case boil.AfterUpdateHook:
-		contentAfterUpdateHooks = append(contentAfterUpdateHooks, contentHook)
+		strategyAfterUpdateHooks = append(strategyAfterUpdateHooks, strategyHook)
 	case boil.BeforeDeleteHook:
-		contentBeforeDeleteHooks = append(contentBeforeDeleteHooks, contentHook)
+		strategyBeforeDeleteHooks = append(strategyBeforeDeleteHooks, strategyHook)
 	case boil.AfterDeleteHook:
-		contentAfterDeleteHooks = append(contentAfterDeleteHooks, contentHook)
+		strategyAfterDeleteHooks = append(strategyAfterDeleteHooks, strategyHook)
 	case boil.BeforeUpsertHook:
-		contentBeforeUpsertHooks = append(contentBeforeUpsertHooks, contentHook)
+		strategyBeforeUpsertHooks = append(strategyBeforeUpsertHooks, strategyHook)
 	case boil.AfterUpsertHook:
-		contentAfterUpsertHooks = append(contentAfterUpsertHooks, contentHook)
+		strategyAfterUpsertHooks = append(strategyAfterUpsertHooks, strategyHook)
 	}
 }
 
-// One returns a single content record from the query.
-func (q contentQuery) One(ctx context.Context, exec boil.ContextExecutor) (*Content, error) {
-	o := &Content{}
+// One returns a single strategy record from the query.
+func (q strategyQuery) One(ctx context.Context, exec boil.ContextExecutor) (*Strategy, error) {
+	o := &Strategy{}
 
 	queries.SetLimit(q.Query, 1)
 
@@ -319,7 +326,7 @@ func (q contentQuery) One(ctx context.Context, exec boil.ContextExecutor) (*Cont
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, sql.ErrNoRows
 		}
-		return nil, errors.Wrap(err, "models: failed to execute a one query for contents")
+		return nil, errors.Wrap(err, "models: failed to execute a one query for strategy")
 	}
 
 	if err := o.doAfterSelectHooks(ctx, exec); err != nil {
@@ -329,16 +336,16 @@ func (q contentQuery) One(ctx context.Context, exec boil.ContextExecutor) (*Cont
 	return o, nil
 }
 
-// All returns all Content records from the query.
-func (q contentQuery) All(ctx context.Context, exec boil.ContextExecutor) (ContentSlice, error) {
-	var o []*Content
+// All returns all Strategy records from the query.
+func (q strategyQuery) All(ctx context.Context, exec boil.ContextExecutor) (StrategySlice, error) {
+	var o []*Strategy
 
 	err := q.Bind(ctx, exec, &o)
 	if err != nil {
-		return nil, errors.Wrap(err, "models: failed to assign all query results to Content slice")
+		return nil, errors.Wrap(err, "models: failed to assign all query results to Strategy slice")
 	}
 
-	if len(contentAfterSelectHooks) != 0 {
+	if len(strategyAfterSelectHooks) != 0 {
 		for _, obj := range o {
 			if err := obj.doAfterSelectHooks(ctx, exec); err != nil {
 				return o, err
@@ -349,8 +356,8 @@ func (q contentQuery) All(ctx context.Context, exec boil.ContextExecutor) (Conte
 	return o, nil
 }
 
-// Count returns the count of all Content records in the query.
-func (q contentQuery) Count(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
+// Count returns the count of all Strategy records in the query.
+func (q strategyQuery) Count(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
 	var count int64
 
 	queries.SetSelect(q.Query, nil)
@@ -358,14 +365,14 @@ func (q contentQuery) Count(ctx context.Context, exec boil.ContextExecutor) (int
 
 	err := q.Query.QueryRowContext(ctx, exec).Scan(&count)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to count contents rows")
+		return 0, errors.Wrap(err, "models: failed to count strategy rows")
 	}
 
 	return count, nil
 }
 
 // Exists checks if the row exists in the table.
-func (q contentQuery) Exists(ctx context.Context, exec boil.ContextExecutor) (bool, error) {
+func (q strategyQuery) Exists(ctx context.Context, exec boil.ContextExecutor) (bool, error) {
 	var count int64
 
 	queries.SetSelect(q.Query, nil)
@@ -374,58 +381,58 @@ func (q contentQuery) Exists(ctx context.Context, exec boil.ContextExecutor) (bo
 
 	err := q.Query.QueryRowContext(ctx, exec).Scan(&count)
 	if err != nil {
-		return false, errors.Wrap(err, "models: failed to check if contents exists")
+		return false, errors.Wrap(err, "models: failed to check if strategy exists")
 	}
 
 	return count > 0, nil
 }
 
-// Contents retrieves all the records using an executor.
-func Contents(mods ...qm.QueryMod) contentQuery {
-	mods = append(mods, qm.From("\"contents\""))
+// Strategies retrieves all the records using an executor.
+func Strategies(mods ...qm.QueryMod) strategyQuery {
+	mods = append(mods, qm.From("\"strategy\""))
 	q := NewQuery(mods...)
 	if len(queries.GetSelect(q)) == 0 {
-		queries.SetSelect(q, []string{"\"contents\".*"})
+		queries.SetSelect(q, []string{"\"strategy\".*"})
 	}
 
-	return contentQuery{q}
+	return strategyQuery{q}
 }
 
-// FindContent retrieves a single record by ID with an executor.
+// FindStrategy retrieves a single record by ID with an executor.
 // If selectCols is empty Find will return all columns.
-func FindContent(ctx context.Context, exec boil.ContextExecutor, iD int64, selectCols ...string) (*Content, error) {
-	contentObj := &Content{}
+func FindStrategy(ctx context.Context, exec boil.ContextExecutor, iD int, selectCols ...string) (*Strategy, error) {
+	strategyObj := &Strategy{}
 
 	sel := "*"
 	if len(selectCols) > 0 {
 		sel = strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, selectCols), ",")
 	}
 	query := fmt.Sprintf(
-		"select %s from \"contents\" where \"id\"=$1", sel,
+		"select %s from \"strategy\" where \"id\"=$1", sel,
 	)
 
 	q := queries.Raw(query, iD)
 
-	err := q.Bind(ctx, exec, contentObj)
+	err := q.Bind(ctx, exec, strategyObj)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, sql.ErrNoRows
 		}
-		return nil, errors.Wrap(err, "models: unable to select from contents")
+		return nil, errors.Wrap(err, "models: unable to select from strategy")
 	}
 
-	if err = contentObj.doAfterSelectHooks(ctx, exec); err != nil {
-		return contentObj, err
+	if err = strategyObj.doAfterSelectHooks(ctx, exec); err != nil {
+		return strategyObj, err
 	}
 
-	return contentObj, nil
+	return strategyObj, nil
 }
 
 // Insert a single record using an executor.
 // See boil.Columns.InsertColumnSet documentation to understand column list inference for inserts.
-func (o *Content) Insert(ctx context.Context, exec boil.ContextExecutor, columns boil.Columns) error {
+func (o *Strategy) Insert(ctx context.Context, exec boil.ContextExecutor, columns boil.Columns) error {
 	if o == nil {
-		return errors.New("models: no contents provided for insertion")
+		return errors.New("models: no strategy provided for insertion")
 	}
 
 	var err error
@@ -444,33 +451,33 @@ func (o *Content) Insert(ctx context.Context, exec boil.ContextExecutor, columns
 		return err
 	}
 
-	nzDefaults := queries.NonZeroDefaultSet(contentColumnsWithDefault, o)
+	nzDefaults := queries.NonZeroDefaultSet(strategyColumnsWithDefault, o)
 
 	key := makeCacheKey(columns, nzDefaults)
-	contentInsertCacheMut.RLock()
-	cache, cached := contentInsertCache[key]
-	contentInsertCacheMut.RUnlock()
+	strategyInsertCacheMut.RLock()
+	cache, cached := strategyInsertCache[key]
+	strategyInsertCacheMut.RUnlock()
 
 	if !cached {
 		wl, returnColumns := columns.InsertColumnSet(
-			contentAllColumns,
-			contentColumnsWithDefault,
-			contentColumnsWithoutDefault,
+			strategyAllColumns,
+			strategyColumnsWithDefault,
+			strategyColumnsWithoutDefault,
 			nzDefaults,
 		)
 
-		cache.valueMapping, err = queries.BindMapping(contentType, contentMapping, wl)
+		cache.valueMapping, err = queries.BindMapping(strategyType, strategyMapping, wl)
 		if err != nil {
 			return err
 		}
-		cache.retMapping, err = queries.BindMapping(contentType, contentMapping, returnColumns)
+		cache.retMapping, err = queries.BindMapping(strategyType, strategyMapping, returnColumns)
 		if err != nil {
 			return err
 		}
 		if len(wl) != 0 {
-			cache.query = fmt.Sprintf("INSERT INTO \"contents\" (\"%s\") %%sVALUES (%s)%%s", strings.Join(wl, "\",\""), strmangle.Placeholders(dialect.UseIndexPlaceholders, len(wl), 1, 1))
+			cache.query = fmt.Sprintf("INSERT INTO \"strategy\" (\"%s\") %%sVALUES (%s)%%s", strings.Join(wl, "\",\""), strmangle.Placeholders(dialect.UseIndexPlaceholders, len(wl), 1, 1))
 		} else {
-			cache.query = "INSERT INTO \"contents\" %sDEFAULT VALUES%s"
+			cache.query = "INSERT INTO \"strategy\" %sDEFAULT VALUES%s"
 		}
 
 		var queryOutput, queryReturning string
@@ -498,22 +505,22 @@ func (o *Content) Insert(ctx context.Context, exec boil.ContextExecutor, columns
 	}
 
 	if err != nil {
-		return errors.Wrap(err, "models: unable to insert into contents")
+		return errors.Wrap(err, "models: unable to insert into strategy")
 	}
 
 	if !cached {
-		contentInsertCacheMut.Lock()
-		contentInsertCache[key] = cache
-		contentInsertCacheMut.Unlock()
+		strategyInsertCacheMut.Lock()
+		strategyInsertCache[key] = cache
+		strategyInsertCacheMut.Unlock()
 	}
 
 	return o.doAfterInsertHooks(ctx, exec)
 }
 
-// Update uses an executor to update the Content.
+// Update uses an executor to update the Strategy.
 // See boil.Columns.UpdateColumnSet documentation to understand column list inference for updates.
 // Update does not automatically update the record in case of default values. Use .Reload() to refresh the records.
-func (o *Content) Update(ctx context.Context, exec boil.ContextExecutor, columns boil.Columns) (int64, error) {
+func (o *Strategy) Update(ctx context.Context, exec boil.ContextExecutor, columns boil.Columns) (int64, error) {
 	if !boil.TimestampsAreSkipped(ctx) {
 		currTime := time.Now().In(boil.GetLocation())
 
@@ -525,28 +532,28 @@ func (o *Content) Update(ctx context.Context, exec boil.ContextExecutor, columns
 		return 0, err
 	}
 	key := makeCacheKey(columns, nil)
-	contentUpdateCacheMut.RLock()
-	cache, cached := contentUpdateCache[key]
-	contentUpdateCacheMut.RUnlock()
+	strategyUpdateCacheMut.RLock()
+	cache, cached := strategyUpdateCache[key]
+	strategyUpdateCacheMut.RUnlock()
 
 	if !cached {
 		wl := columns.UpdateColumnSet(
-			contentAllColumns,
-			contentPrimaryKeyColumns,
+			strategyAllColumns,
+			strategyPrimaryKeyColumns,
 		)
 
 		if !columns.IsWhitelist() {
 			wl = strmangle.SetComplement(wl, []string{"created_at"})
 		}
 		if len(wl) == 0 {
-			return 0, errors.New("models: unable to update contents, could not build whitelist")
+			return 0, errors.New("models: unable to update strategy, could not build whitelist")
 		}
 
-		cache.query = fmt.Sprintf("UPDATE \"contents\" SET %s WHERE %s",
+		cache.query = fmt.Sprintf("UPDATE \"strategy\" SET %s WHERE %s",
 			strmangle.SetParamNames("\"", "\"", 1, wl),
-			strmangle.WhereClause("\"", "\"", len(wl)+1, contentPrimaryKeyColumns),
+			strmangle.WhereClause("\"", "\"", len(wl)+1, strategyPrimaryKeyColumns),
 		)
-		cache.valueMapping, err = queries.BindMapping(contentType, contentMapping, append(wl, contentPrimaryKeyColumns...))
+		cache.valueMapping, err = queries.BindMapping(strategyType, strategyMapping, append(wl, strategyPrimaryKeyColumns...))
 		if err != nil {
 			return 0, err
 		}
@@ -562,42 +569,42 @@ func (o *Content) Update(ctx context.Context, exec boil.ContextExecutor, columns
 	var result sql.Result
 	result, err = exec.ExecContext(ctx, cache.query, values...)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to update contents row")
+		return 0, errors.Wrap(err, "models: unable to update strategy row")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to get rows affected by update for contents")
+		return 0, errors.Wrap(err, "models: failed to get rows affected by update for strategy")
 	}
 
 	if !cached {
-		contentUpdateCacheMut.Lock()
-		contentUpdateCache[key] = cache
-		contentUpdateCacheMut.Unlock()
+		strategyUpdateCacheMut.Lock()
+		strategyUpdateCache[key] = cache
+		strategyUpdateCacheMut.Unlock()
 	}
 
 	return rowsAff, o.doAfterUpdateHooks(ctx, exec)
 }
 
 // UpdateAll updates all rows with the specified column values.
-func (q contentQuery) UpdateAll(ctx context.Context, exec boil.ContextExecutor, cols M) (int64, error) {
+func (q strategyQuery) UpdateAll(ctx context.Context, exec boil.ContextExecutor, cols M) (int64, error) {
 	queries.SetUpdate(q.Query, cols)
 
 	result, err := q.Query.ExecContext(ctx, exec)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to update all for contents")
+		return 0, errors.Wrap(err, "models: unable to update all for strategy")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to retrieve rows affected for contents")
+		return 0, errors.Wrap(err, "models: unable to retrieve rows affected for strategy")
 	}
 
 	return rowsAff, nil
 }
 
 // UpdateAll updates all rows with the specified column values, using an executor.
-func (o ContentSlice) UpdateAll(ctx context.Context, exec boil.ContextExecutor, cols M) (int64, error) {
+func (o StrategySlice) UpdateAll(ctx context.Context, exec boil.ContextExecutor, cols M) (int64, error) {
 	ln := int64(len(o))
 	if ln == 0 {
 		return 0, nil
@@ -619,13 +626,13 @@ func (o ContentSlice) UpdateAll(ctx context.Context, exec boil.ContextExecutor, 
 
 	// Append all of the primary key values for each column
 	for _, obj := range o {
-		pkeyArgs := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(obj)), contentPrimaryKeyMapping)
+		pkeyArgs := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(obj)), strategyPrimaryKeyMapping)
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := fmt.Sprintf("UPDATE \"contents\" SET %s WHERE %s",
+	sql := fmt.Sprintf("UPDATE \"strategy\" SET %s WHERE %s",
 		strmangle.SetParamNames("\"", "\"", 1, colNames),
-		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), len(colNames)+1, contentPrimaryKeyColumns, len(o)))
+		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), len(colNames)+1, strategyPrimaryKeyColumns, len(o)))
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -634,21 +641,21 @@ func (o ContentSlice) UpdateAll(ctx context.Context, exec boil.ContextExecutor, 
 	}
 	result, err := exec.ExecContext(ctx, sql, args...)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to update all in content slice")
+		return 0, errors.Wrap(err, "models: unable to update all in strategy slice")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to retrieve rows affected all in update all content")
+		return 0, errors.Wrap(err, "models: unable to retrieve rows affected all in update all strategy")
 	}
 	return rowsAff, nil
 }
 
 // Upsert attempts an insert using an executor, and does an update or ignore on conflict.
 // See boil.Columns documentation for how to properly use updateColumns and insertColumns.
-func (o *Content) Upsert(ctx context.Context, exec boil.ContextExecutor, updateOnConflict bool, conflictColumns []string, updateColumns, insertColumns boil.Columns) error {
+func (o *Strategy) Upsert(ctx context.Context, exec boil.ContextExecutor, updateOnConflict bool, conflictColumns []string, updateColumns, insertColumns boil.Columns) error {
 	if o == nil {
-		return errors.New("models: no contents provided for upsert")
+		return errors.New("models: no strategy provided for upsert")
 	}
 	if !boil.TimestampsAreSkipped(ctx) {
 		currTime := time.Now().In(boil.GetLocation())
@@ -663,7 +670,7 @@ func (o *Content) Upsert(ctx context.Context, exec boil.ContextExecutor, updateO
 		return err
 	}
 
-	nzDefaults := queries.NonZeroDefaultSet(contentColumnsWithDefault, o)
+	nzDefaults := queries.NonZeroDefaultSet(strategyColumnsWithDefault, o)
 
 	// Build cache key in-line uglily - mysql vs psql problems
 	buf := strmangle.GetBuffer()
@@ -693,42 +700,42 @@ func (o *Content) Upsert(ctx context.Context, exec boil.ContextExecutor, updateO
 	key := buf.String()
 	strmangle.PutBuffer(buf)
 
-	contentUpsertCacheMut.RLock()
-	cache, cached := contentUpsertCache[key]
-	contentUpsertCacheMut.RUnlock()
+	strategyUpsertCacheMut.RLock()
+	cache, cached := strategyUpsertCache[key]
+	strategyUpsertCacheMut.RUnlock()
 
 	var err error
 
 	if !cached {
 		insert, ret := insertColumns.InsertColumnSet(
-			contentAllColumns,
-			contentColumnsWithDefault,
-			contentColumnsWithoutDefault,
+			strategyAllColumns,
+			strategyColumnsWithDefault,
+			strategyColumnsWithoutDefault,
 			nzDefaults,
 		)
 
 		update := updateColumns.UpdateColumnSet(
-			contentAllColumns,
-			contentPrimaryKeyColumns,
+			strategyAllColumns,
+			strategyPrimaryKeyColumns,
 		)
 
 		if updateOnConflict && len(update) == 0 {
-			return errors.New("models: unable to upsert contents, could not build update column list")
+			return errors.New("models: unable to upsert strategy, could not build update column list")
 		}
 
 		conflict := conflictColumns
 		if len(conflict) == 0 {
-			conflict = make([]string, len(contentPrimaryKeyColumns))
-			copy(conflict, contentPrimaryKeyColumns)
+			conflict = make([]string, len(strategyPrimaryKeyColumns))
+			copy(conflict, strategyPrimaryKeyColumns)
 		}
-		cache.query = buildUpsertQueryPostgres(dialect, "\"contents\"", updateOnConflict, ret, update, conflict, insert)
+		cache.query = buildUpsertQueryPostgres(dialect, "\"strategy\"", updateOnConflict, ret, update, conflict, insert)
 
-		cache.valueMapping, err = queries.BindMapping(contentType, contentMapping, insert)
+		cache.valueMapping, err = queries.BindMapping(strategyType, strategyMapping, insert)
 		if err != nil {
 			return err
 		}
 		if len(ret) != 0 {
-			cache.retMapping, err = queries.BindMapping(contentType, contentMapping, ret)
+			cache.retMapping, err = queries.BindMapping(strategyType, strategyMapping, ret)
 			if err != nil {
 				return err
 			}
@@ -756,31 +763,31 @@ func (o *Content) Upsert(ctx context.Context, exec boil.ContextExecutor, updateO
 		_, err = exec.ExecContext(ctx, cache.query, vals...)
 	}
 	if err != nil {
-		return errors.Wrap(err, "models: unable to upsert contents")
+		return errors.Wrap(err, "models: unable to upsert strategy")
 	}
 
 	if !cached {
-		contentUpsertCacheMut.Lock()
-		contentUpsertCache[key] = cache
-		contentUpsertCacheMut.Unlock()
+		strategyUpsertCacheMut.Lock()
+		strategyUpsertCache[key] = cache
+		strategyUpsertCacheMut.Unlock()
 	}
 
 	return o.doAfterUpsertHooks(ctx, exec)
 }
 
-// Delete deletes a single Content record with an executor.
+// Delete deletes a single Strategy record with an executor.
 // Delete will match against the primary key column to find the record to delete.
-func (o *Content) Delete(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
+func (o *Strategy) Delete(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
 	if o == nil {
-		return 0, errors.New("models: no Content provided for delete")
+		return 0, errors.New("models: no Strategy provided for delete")
 	}
 
 	if err := o.doBeforeDeleteHooks(ctx, exec); err != nil {
 		return 0, err
 	}
 
-	args := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), contentPrimaryKeyMapping)
-	sql := "DELETE FROM \"contents\" WHERE \"id\"=$1"
+	args := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), strategyPrimaryKeyMapping)
+	sql := "DELETE FROM \"strategy\" WHERE \"id\"=$1"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -789,12 +796,12 @@ func (o *Content) Delete(ctx context.Context, exec boil.ContextExecutor) (int64,
 	}
 	result, err := exec.ExecContext(ctx, sql, args...)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to delete from contents")
+		return 0, errors.Wrap(err, "models: unable to delete from strategy")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to get rows affected by delete for contents")
+		return 0, errors.Wrap(err, "models: failed to get rows affected by delete for strategy")
 	}
 
 	if err := o.doAfterDeleteHooks(ctx, exec); err != nil {
@@ -805,33 +812,33 @@ func (o *Content) Delete(ctx context.Context, exec boil.ContextExecutor) (int64,
 }
 
 // DeleteAll deletes all matching rows.
-func (q contentQuery) DeleteAll(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
+func (q strategyQuery) DeleteAll(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
 	if q.Query == nil {
-		return 0, errors.New("models: no contentQuery provided for delete all")
+		return 0, errors.New("models: no strategyQuery provided for delete all")
 	}
 
 	queries.SetDelete(q.Query)
 
 	result, err := q.Query.ExecContext(ctx, exec)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to delete all from contents")
+		return 0, errors.Wrap(err, "models: unable to delete all from strategy")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to get rows affected by deleteall for contents")
+		return 0, errors.Wrap(err, "models: failed to get rows affected by deleteall for strategy")
 	}
 
 	return rowsAff, nil
 }
 
 // DeleteAll deletes all rows in the slice, using an executor.
-func (o ContentSlice) DeleteAll(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
+func (o StrategySlice) DeleteAll(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
 	if len(o) == 0 {
 		return 0, nil
 	}
 
-	if len(contentBeforeDeleteHooks) != 0 {
+	if len(strategyBeforeDeleteHooks) != 0 {
 		for _, obj := range o {
 			if err := obj.doBeforeDeleteHooks(ctx, exec); err != nil {
 				return 0, err
@@ -841,12 +848,12 @@ func (o ContentSlice) DeleteAll(ctx context.Context, exec boil.ContextExecutor) 
 
 	var args []interface{}
 	for _, obj := range o {
-		pkeyArgs := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(obj)), contentPrimaryKeyMapping)
+		pkeyArgs := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(obj)), strategyPrimaryKeyMapping)
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := "DELETE FROM \"contents\" WHERE " +
-		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 1, contentPrimaryKeyColumns, len(o))
+	sql := "DELETE FROM \"strategy\" WHERE " +
+		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 1, strategyPrimaryKeyColumns, len(o))
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -855,15 +862,15 @@ func (o ContentSlice) DeleteAll(ctx context.Context, exec boil.ContextExecutor) 
 	}
 	result, err := exec.ExecContext(ctx, sql, args...)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to delete all from content slice")
+		return 0, errors.Wrap(err, "models: unable to delete all from strategy slice")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to get rows affected by deleteall for contents")
+		return 0, errors.Wrap(err, "models: failed to get rows affected by deleteall for strategy")
 	}
 
-	if len(contentAfterDeleteHooks) != 0 {
+	if len(strategyAfterDeleteHooks) != 0 {
 		for _, obj := range o {
 			if err := obj.doAfterDeleteHooks(ctx, exec); err != nil {
 				return 0, err
@@ -876,8 +883,8 @@ func (o ContentSlice) DeleteAll(ctx context.Context, exec boil.ContextExecutor) 
 
 // Reload refetches the object from the database
 // using the primary keys with an executor.
-func (o *Content) Reload(ctx context.Context, exec boil.ContextExecutor) error {
-	ret, err := FindContent(ctx, exec, o.ID)
+func (o *Strategy) Reload(ctx context.Context, exec boil.ContextExecutor) error {
+	ret, err := FindStrategy(ctx, exec, o.ID)
 	if err != nil {
 		return err
 	}
@@ -888,26 +895,26 @@ func (o *Content) Reload(ctx context.Context, exec boil.ContextExecutor) error {
 
 // ReloadAll refetches every row with matching primary key column values
 // and overwrites the original object slice with the newly updated slice.
-func (o *ContentSlice) ReloadAll(ctx context.Context, exec boil.ContextExecutor) error {
+func (o *StrategySlice) ReloadAll(ctx context.Context, exec boil.ContextExecutor) error {
 	if o == nil || len(*o) == 0 {
 		return nil
 	}
 
-	slice := ContentSlice{}
+	slice := StrategySlice{}
 	var args []interface{}
 	for _, obj := range *o {
-		pkeyArgs := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(obj)), contentPrimaryKeyMapping)
+		pkeyArgs := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(obj)), strategyPrimaryKeyMapping)
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := "SELECT \"contents\".* FROM \"contents\" WHERE " +
-		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 1, contentPrimaryKeyColumns, len(*o))
+	sql := "SELECT \"strategy\".* FROM \"strategy\" WHERE " +
+		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 1, strategyPrimaryKeyColumns, len(*o))
 
 	q := queries.Raw(sql, args...)
 
 	err := q.Bind(ctx, exec, &slice)
 	if err != nil {
-		return errors.Wrap(err, "models: unable to reload all in ContentSlice")
+		return errors.Wrap(err, "models: unable to reload all in StrategySlice")
 	}
 
 	*o = slice
@@ -915,10 +922,10 @@ func (o *ContentSlice) ReloadAll(ctx context.Context, exec boil.ContextExecutor)
 	return nil
 }
 
-// ContentExists checks if the Content row exists.
-func ContentExists(ctx context.Context, exec boil.ContextExecutor, iD int64) (bool, error) {
+// StrategyExists checks if the Strategy row exists.
+func StrategyExists(ctx context.Context, exec boil.ContextExecutor, iD int) (bool, error) {
 	var exists bool
-	sql := "select exists(select 1 from \"contents\" where \"id\"=$1 limit 1)"
+	sql := "select exists(select 1 from \"strategy\" where \"id\"=$1 limit 1)"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -929,7 +936,7 @@ func ContentExists(ctx context.Context, exec boil.ContextExecutor, iD int64) (bo
 
 	err := row.Scan(&exists)
 	if err != nil {
-		return false, errors.Wrap(err, "models: unable to check if contents exists")
+		return false, errors.Wrap(err, "models: unable to check if strategy exists")
 	}
 
 	return exists, nil

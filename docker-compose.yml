@@ -10,7 +10,7 @@ services:
       - cmdrun=receiver
     ports:
       - 80:80
-    command: ["./app", "receiver --server-port=80"]
+    command: ["./app", "receiver", "--server-port=80"]
 #  app-tasks:
 #    container_name: automated_test-tasks
 #    restart: always

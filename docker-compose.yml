@@ -6,6 +6,8 @@ services:
     restart: always
     build:
       context: .
+    networks:
+      - gateway
     environment:
       - cmdrun=receiver
     ports:
@@ -23,6 +25,8 @@ services:
   psql:
     image: postgres:latest
     restart: always
+    networks:
+      - gateway
     environment:
       POSTGRES_PASSWORD: root
       POSTGRES_USER: root
@@ -52,3 +56,5 @@ services:
 #    network_mode: "host"
 #    ports:
 #      - 6379:6379
+networks:
+  gateway: {}

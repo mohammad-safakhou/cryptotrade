@@ -6,13 +6,12 @@ services:
     restart: always
     build:
       context: .
-    networks:
-      - gateway
+    network_mode: "host"
     environment:
       - cmdrun=receiver
     ports:
       - 80:80
-    command: ["./app", "receiver", "--server-port=80000"]
+    command: ["./app", "receiver", "--server-port=80"]
 #  app-tasks:
 #    container_name: automated_test-tasks
 #    restart: always
@@ -25,8 +24,7 @@ services:
   psql:
     image: postgres:latest
     restart: always
-    networks:
-      - gateway
+    network_mode: "host"
     environment:
       POSTGRES_PASSWORD: root
       POSTGRES_USER: root
@@ -56,5 +54,3 @@ services:
 #    network_mode: "host"
 #    ports:
 #      - 6379:6379
-networks:
-  gateway: {}

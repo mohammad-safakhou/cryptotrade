@@ -72,7 +72,7 @@ var receiverCmd = &cobra.Command{
 				log.Println(err.Error())
 				return err
 			}
-			handlers.SharedObject.ReceiveSignal(&signal)
+			//handlers.SharedObject.ReceiveSignal(&signal)
 
 			content := models.Content{Data: null.NewString(string(bodyBytes), true)}
 			err := content.Insert(ctx.Request().Context(), dbPostgres, boil.Infer())

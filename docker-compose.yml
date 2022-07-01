@@ -12,7 +12,7 @@ services:
       - cmdrun=receiver
     ports:
       - 80:80
-    command: ["./app", "receiver", "--server-port=80"]
+    command: ["./app", "receiver", "--server-port=80000"]
 #  app-tasks:
 #    container_name: automated_test-tasks
 #    restart: always
@@ -31,7 +31,7 @@ services:
       POSTGRES_PASSWORD: root
       POSTGRES_USER: root
     ports:
-      - 5432:5432
+      - 5433:5432
 #  influxdb:
 #    image: dockerhub.ir/influxdb:latest
 #    container_name: influxdb

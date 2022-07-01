@@ -66,19 +66,21 @@ var receiverCmd = &cobra.Command{
 		e.POST("/receiver", func(ctx echo.Context) error {
 			bodyBytes, _ := ioutil.ReadAll(ctx.Request().Body)
 
-			var signal handlers.Signals
-			err = json.Unmarshal(bodyBytes, &signal)
-			if err != nil {
-				log.Println(err.Error())
-				return err
-			}
-			//handlers.SharedObject.ReceiveSignal(&signal)
-
 			content := models.Content{Data: null.NewString(string(bodyBytes), true)}
 			err := content.Insert(ctx.Request().Context(), dbPostgres, boil.Infer())
 			if err != nil {
 				return ctx.JSON(http.StatusBadRequest, err)
 			}
+
+			//var signal handlers.Signals
+			//err = json.Unmarshal(bodyBytes, &signal)
+			//if err != nil {
+			//	log.Println(err.Error())
+			//	return err
+			//}
+			//handlers.SharedObject.ReceiveSignal(&signal)
+
+
 			return ctx.JSON(http.StatusOK, "")
 		})
 		e.GET("/exit", func(ctx echo.Context) error {

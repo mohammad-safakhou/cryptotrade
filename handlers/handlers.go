@@ -101,7 +101,7 @@ type Action struct {
 }
 
 type Strategy struct {
-	MainTimeFrame             *TimeFrame   `json:"main_time_frame"`
+	MainTimeFrame             *TimeFrame   `json:"main_timeframe"`
 	SubTimeFrames             []*TimeFrame `json:"sub_time_frames"`
 	SubTimeFramesOperation    string       `json:"sub_time_frames_operation"`
 	MainSubTimeFrameOperation string       `json:"main_sub_time_frame_operation"`
@@ -116,7 +116,7 @@ type Strategy struct {
 type TimeFrame struct {
 	Storage                 *Storage `json:"-"`
 	TimeFrame               string   `json:"time_frame"`
-	EnableEndOfTimeFrame    bool     `json:"enable_end_of_time_frame"`
+	EnableEndOfTimeFrame    bool     `json:"enable_end_of_timeframe"`
 	SignalRepeatsToConsider int      `json:"signal_repeats_to_consider"`
 	TimeDistribution        int      `json:"time_distribution"`
 }
@@ -209,13 +209,17 @@ func (o *Object) SendAction() {
 		}
 	}
 
-	if position.Side != action {
+	if position.IsOpen {
+		if position.Side != action {
+			o.Action <- &Action{Side: action}
+		}
+	} else {
 		o.Action <- &Action{Side: action}
 	}
 }
 
 func (o *Object) ReceiveSignal(signal *Signals) {
-	if signal.Side == o.Strategy.MainTimeFrame.TimeFrame {
+	if signal.TimeFrame == o.Strategy.MainTimeFrame.TimeFrame {
 		o.AddToMain(signal)
 	} else {
 		o.AddToSub(signal)
@@ -256,9 +260,13 @@ func (o *Object) ClosePosition() {
 }
 
 func (o *Object) OpenPosition(side string) {
+	log.Infof("opening position ", side)
 	account := o.GetAccountOverView()
 	market := o.MarketPrice()
 	size := int(float64(o.Strategy.SizePercent) / 100 * (account.AvailableBalance / market.Value * float64(o.Strategy.Leverage)) * 1000)
+	if size == 0 {
+		size = 1
+	}
 	response, err := SharedKuCoinService.CreateOrder(map[string]string{
 		"clientOid": uuid.New().String(),
 		"side":      side,

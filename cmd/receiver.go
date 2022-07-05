@@ -55,12 +55,20 @@ var receiverCmd = &cobra.Command{
 		if err != nil {
 			panic(err)
 		}
+		strat.MainTimeFrame.Storage = &handlers.Storage{}
+		if strat.SubTimeFrames != nil {
+			for _, value := range strat.SubTimeFrames {
+				value.Storage = &handlers.Storage{}
+			}
+		}
 
 		handlers.SharedObject = &handlers.Object{
 			Exit:     false,
 			Strategy: &strat,
 			Action:   make(chan *handlers.Action, 100),
 		}
+
+		go handlers.SharedObject.ActionHandler()
 
 		// Routes
 		e.POST("/receiver", func(ctx echo.Context) error {
@@ -82,7 +90,6 @@ var receiverCmd = &cobra.Command{
 			signal.Side = string(bodyBytes)
 			signal.TimeFrame = "5m"
 			handlers.SharedObject.ReceiveSignal(&signal)
-
 
 			return ctx.JSON(http.StatusOK, "")
 		})

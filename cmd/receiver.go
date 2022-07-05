@@ -80,6 +80,7 @@ var receiverCmd = &cobra.Command{
 			//}
 			signal.PushedTime = time.Now()
 			signal.Side = string(bodyBytes)
+			signal.TimeFrame = "5m"
 			handlers.SharedObject.ReceiveSignal(&signal)
 
 

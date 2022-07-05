@@ -72,13 +72,15 @@ var receiverCmd = &cobra.Command{
 				return ctx.JSON(http.StatusBadRequest, err)
 			}
 
-			//var signal handlers.Signals
+			var signal handlers.Signals
 			//err = json.Unmarshal(bodyBytes, &signal)
 			//if err != nil {
 			//	log.Println(err.Error())
 			//	return err
 			//}
-			//handlers.SharedObject.ReceiveSignal(&signal)
+			signal.PushedTime = time.Now()
+			signal.Side = string(bodyBytes)
+			handlers.SharedObject.ReceiveSignal(&signal)
 
 
 			return ctx.JSON(http.StatusOK, "")

@@ -1,4 +1,4 @@
-version: '3.1'
+version: '3.9'
 
 services:
   app:
@@ -6,7 +6,7 @@ services:
     restart: always
     build:
       context: .
-    network_mode: "host"
+    networks: "host"
     environment:
       - cmdrun=receiver
     ports:
@@ -24,12 +24,12 @@ services:
   psql:
     image: postgres:latest
     restart: always
-    network_mode: "host"
+    networks: "host"
     environment:
       POSTGRES_PASSWORD: root
       POSTGRES_USER: root
     ports:
-      - 5433:5432
+      - 5432:5432
 #  influxdb:
 #    image: dockerhub.ir/influxdb:latest
 #    container_name: influxdb

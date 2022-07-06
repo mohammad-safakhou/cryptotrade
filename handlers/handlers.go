@@ -3,9 +3,9 @@ package handlers
 import (
 	"encoding/json"
 	kucoin "github.com/Kucoin/kucoin-futures-go-sdk"
-	"github.com/google/martian/log"
 	"github.com/google/uuid"
 	"github.com/volatiletech/null/v8"
+	"log"
 	"strconv"
 	"time"
 )
@@ -145,11 +145,13 @@ type WeightedSignals struct {
 }
 
 func (o *Object) StopStrategy() {
+	log.Printf("stopping strategy...\n")
 	o.ClosePosition()
 	o.Exit = true
 }
 
 func (o *Object) ResumeStrategy() {
+	log.Printf("resuming strategy...\n")
 	o.Exit = false
 }
 
@@ -157,6 +159,7 @@ func (o *Object) ActionHandler() {
 	for action := range o.Action {
 		o.ClosePosition()
 		if o.Exit {
+			log.Printf("strategy is stopped...\n")
 			continue
 		}
 		o.OpenPosition(action.Side)
@@ -209,6 +212,7 @@ func (o *Object) SendAction() {
 		}
 	}
 
+	log.Printf("new action = %s\n", action)
 	if position.IsOpen {
 		if position.Side != action {
 			o.Action <- &Action{Side: action}
@@ -219,6 +223,7 @@ func (o *Object) SendAction() {
 }
 
 func (o *Object) ReceiveSignal(signal *Signals) {
+	log.Printf("receiving signal on timeframe %s - side %s\n", signal.TimeFrame, signal.Side)
 	if signal.TimeFrame == o.Strategy.MainTimeFrame.TimeFrame {
 		o.AddToMain(signal)
 	} else {
@@ -248,46 +253,50 @@ func (o *Object) ClosePosition() {
 	if position.Side == "buy" {
 		side = "sell"
 	}
-	response, err := SharedKuCoinService.CreateOrder(map[string]string{
+	request := map[string]string{
 		"clientOid": uuid.New().String(),
 		"side":      side,
 		"symbol":    o.Strategy.Symbol,
 		"leverage":  strconv.Itoa(o.Strategy.Leverage),
 		"type":      "market",
 		"size":      strconv.Itoa(position.CurrentQty),
-	})
+	}
+	log.Printf("closing position with:\n%v\n", request)
+	response, err := SharedKuCoinService.CreateOrder(request)
 	if err != nil {
-		log.Errorf("problem in placing order: %v", err)
-		log.Errorf("problem in placing order: %v", response)
+		log.Printf("problem in placing order: %v\n", err)
+		log.Printf("problem in placing order: %v\n", response)
 	}
 }
 
 func (o *Object) OpenPosition(side string) {
-	log.Infof("opening position ", side)
+	log.Printf("opening position %s", side)
 	account := o.GetAccountOverView()
 	market := o.MarketPrice()
 	size := int(float64(o.Strategy.SizePercent) / 100 * (account.AvailableBalance / market.Value * float64(o.Strategy.Leverage)) * 1000)
 	if size == 0 {
 		size = 1
 	}
-	response, err := SharedKuCoinService.CreateOrder(map[string]string{
+	request := map[string]string{
 		"clientOid": uuid.New().String(),
 		"side":      side,
 		"symbol":    o.Strategy.Symbol,
 		"leverage":  strconv.Itoa(o.Strategy.Leverage),
 		"type":      "market",
 		"size":      strconv.Itoa(size),
-	})
+	}
+	log.Printf("opening position with:\n%v\n", request)
+	response, err := SharedKuCoinService.CreateOrder(request)
 	if err != nil {
-		log.Errorf("problem in placing order: %v", err)
-		log.Errorf("problem in placing order: %v", response)
+		log.Printf("problem in placing order: %v", err)
+		log.Printf("problem in placing order: %v", response)
 	}
 }
 
 func (o *Object) GetOpenPosition() (position Position) {
 	resp, err := SharedKuCoinService.Position(o.Strategy.Symbol)
 	if err != nil {
-		log.Errorf("problem in calling get position, %v", err)
+		log.Printf("problem in calling get position, %v\n", err)
 		return Position{}
 	}
 	json.Unmarshal(resp.RawData, &position)
@@ -297,13 +306,14 @@ func (o *Object) GetOpenPosition() (position Position) {
 	} else {
 		position.Side = "buy"
 	}
+	log.Printf("getting open position: \n%v\n", position)
 	return position
 }
 
 func (o *Object) GetAccountOverView() (account Account) {
 	response, err := SharedKuCoinService.AccountOverview(map[string]string{"currency": o.Strategy.Currency})
 	if err != nil {
-		log.Errorf("problem in calling get account, %v", err)
+		log.Printf("problem in calling get account, %v", err)
 		return Account{}
 	}
 	json.Unmarshal(response.RawData, &account)
@@ -313,7 +323,7 @@ func (o *Object) GetAccountOverView() (account Account) {
 func (o *Object) MarketPrice() (market Market) {
 	response, err := SharedKuCoinService.MarkPrice(o.Strategy.Symbol)
 	if err != nil {
-		log.Errorf("problem in calling get account, %v", err)
+		log.Printf("problem in calling get account, %v", err)
 	}
 	json.Unmarshal(response.RawData, &market)
 	return market
@@ -372,7 +382,15 @@ func GetSideResult(side string) bool {
 	}
 }
 
-func TimeFrameHandler(timeFrame *TimeFrame) bool {
+func TimeFrameHandler(timeFrame *TimeFrame) (response bool) {
+	log.Printf("handling timeframe = %s\n", timeFrame.TimeFrame)
+	defer func(resp bool) {
+		if resp {
+			log.Printf("handled timeframe %s with action = buy\n", timeFrame.TimeFrame)
+		} else {
+			log.Printf("handled timeframe %s with action = sell\n", timeFrame.TimeFrame)
+		}
+	}(response)
 	if timeFrame.EnableEndOfTimeFrame {
 		lastSignal := GetLastEndOfTimeFrameSignal(timeFrame.Storage.Signals)
 		return GetSideResult(lastSignal.Side)

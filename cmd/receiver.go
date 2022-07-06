@@ -62,6 +62,8 @@ var receiverCmd = &cobra.Command{
 			}
 		}
 
+		log.Printf("project starting with strategy: \n%v\n", strat)
+
 		handlers.SharedObject = &handlers.Object{
 			Exit:     false,
 			Strategy: &strat,

@@ -6,6 +6,7 @@ import (
 	"cryptotrade/models"
 	"cryptotrade/utils"
 	"encoding/json"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/spf13/cobra"
@@ -62,7 +63,8 @@ var receiverCmd = &cobra.Command{
 			}
 		}
 
-		log.Printf("project starting with strategy: \n%+v\n", strat)
+		spew.Config.Indent = "\t"
+		spew.Dump("project starting with strategy: ", strat)
 
 		handlers.SharedObject = &handlers.Object{
 			Exit:     false,

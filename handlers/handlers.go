@@ -246,6 +246,15 @@ func (o *Object) ClosePosition() {
 	if position.Side == "buy" {
 		side = "sell"
 	}
+	mymap := map[string]string{
+		"clientOid": uuid.New().String(),
+		"side":      side,
+		"symbol":    o.Strategy.Symbol,
+		"leverage":  strconv.Itoa(o.Strategy.Leverage),
+		"type":      "market",
+		"size":      strconv.Itoa(position.CurrentQty),
+	}
+	fmt.Println(mymap)
 	response, err := SharedKuCoinService.CreateOrder(map[string]string{
 		"clientOid": uuid.New().String(),
 		"side":      side,

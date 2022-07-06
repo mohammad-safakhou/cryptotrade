@@ -26,7 +26,7 @@ func init() {
 		kucoin.ApiPassPhraseOption("TestWow1234"),
 		kucoin.ApiKeyVersionOption("2"),
 	)
-
+	spew.Dump("kucoin connected...", SharedKuCoinService)
 }
 
 type Position struct {
@@ -164,6 +164,7 @@ func (o *Object) ActionHandler() {
 			continue
 		}
 		o.OpenPosition(action.Side)
+		log.Printf("action on %s completed...\n", action.Side)
 	}
 }
 

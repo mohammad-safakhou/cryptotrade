@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	kucoin "github.com/Kucoin/kucoin-futures-go-sdk"
 	"github.com/google/martian/log"
 	"github.com/google/uuid"
@@ -267,14 +268,16 @@ func (o *Object) OpenPosition(side string) {
 	if size == 0 {
 		size = 1
 	}
-	response, err := SharedKuCoinService.CreateOrder(map[string]string{
+	mymap := map[string]string{
 		"clientOid": uuid.New().String(),
 		"side":      side,
 		"symbol":    o.Strategy.Symbol,
 		"leverage":  strconv.Itoa(o.Strategy.Leverage),
 		"type":      "market",
 		"size":      strconv.Itoa(size),
-	})
+	}
+	fmt.Println(mymap)
+	response, err := SharedKuCoinService.CreateOrder(mymap)
 	if err != nil {
 		log.Errorf("problem in placing order: %v", err)
 		log.Errorf("problem in placing order: %v", response)

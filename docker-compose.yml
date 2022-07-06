@@ -23,6 +23,8 @@ services:
 #    command: ["./app", "tasks"]
   psql:
     image: postgres:latest
+    volumes:
+      - /db/var/lib/postgresql:/var/lib/postgresql
     restart: always
     network_mode: "host"
     environment:

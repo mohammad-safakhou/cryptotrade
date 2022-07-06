@@ -163,6 +163,7 @@ func (o *Object) ActionHandler() {
 			log.Printf("strategy is stopped...\n")
 			continue
 		}
+		time.Sleep(2 * time.Second)
 		o.OpenPosition(action.Side)
 		log.Printf("action on %s completed...\n", action.Side)
 	}
@@ -269,7 +270,7 @@ func (o *Object) ClosePosition() {
 		spew.Dump("problem in placing order: ", err)
 		spew.Dump("problem in placing order: ", response)
 	}
-	spew.Dump("kucoin response on creating order:", response)
+	spew.Dump("kucoin response on creating order:", response.RawData, response.Message, response.Code)
 }
 
 func (o *Object) OpenPosition(side string) {
@@ -294,6 +295,7 @@ func (o *Object) OpenPosition(side string) {
 		spew.Dump("problem in placing order: ", err)
 		spew.Dump("problem in placing order: ", response)
 	}
+	spew.Dump("kucoin response on creating order:", response.RawData, response.Message, response.Code)
 }
 
 func (o *Object) GetOpenPosition() (position Position) {

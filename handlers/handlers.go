@@ -261,11 +261,11 @@ func (o *Object) ClosePosition() {
 		"type":      "market",
 		"size":      strconv.Itoa(position.CurrentQty),
 	}
-	log.Printf("closing position with:\n%v\n", request)
+	log.Printf("closing position with:\n%+v\n", request)
 	response, err := SharedKuCoinService.CreateOrder(request)
 	if err != nil {
-		log.Printf("problem in placing order: %v\n", err)
-		log.Printf("problem in placing order: %v\n", response)
+		log.Printf("problem in placing order: %+v\n", err)
+		log.Printf("problem in placing order: %+v\n", response)
 	}
 }
 
@@ -285,18 +285,18 @@ func (o *Object) OpenPosition(side string) {
 		"type":      "market",
 		"size":      strconv.Itoa(size),
 	}
-	log.Printf("opening position with:\n%v\n", request)
+	log.Printf("opening position with:\n%+v\n", request)
 	response, err := SharedKuCoinService.CreateOrder(request)
 	if err != nil {
-		log.Printf("problem in placing order: %v", err)
-		log.Printf("problem in placing order: %v", response)
+		log.Printf("problem in placing order: %+v", err)
+		log.Printf("problem in placing order: %+v", response)
 	}
 }
 
 func (o *Object) GetOpenPosition() (position Position) {
 	resp, err := SharedKuCoinService.Position(o.Strategy.Symbol)
 	if err != nil {
-		log.Printf("problem in calling get position, %v\n", err)
+		log.Printf("problem in calling get position, %+v\n", err)
 		return Position{}
 	}
 	json.Unmarshal(resp.RawData, &position)
@@ -306,14 +306,14 @@ func (o *Object) GetOpenPosition() (position Position) {
 	} else {
 		position.Side = "buy"
 	}
-	log.Printf("getting open position: \n%v\n", position)
+	log.Printf("getting open position: \n%+v\n", position)
 	return position
 }
 
 func (o *Object) GetAccountOverView() (account Account) {
 	response, err := SharedKuCoinService.AccountOverview(map[string]string{"currency": o.Strategy.Currency})
 	if err != nil {
-		log.Printf("problem in calling get account, %v", err)
+		log.Printf("problem in calling get account, %+v", err)
 		return Account{}
 	}
 	json.Unmarshal(response.RawData, &account)
@@ -323,7 +323,7 @@ func (o *Object) GetAccountOverView() (account Account) {
 func (o *Object) MarketPrice() (market Market) {
 	response, err := SharedKuCoinService.MarkPrice(o.Strategy.Symbol)
 	if err != nil {
-		log.Printf("problem in calling get account, %v", err)
+		log.Printf("problem in calling get account, %+v", err)
 	}
 	json.Unmarshal(response.RawData, &market)
 	return market

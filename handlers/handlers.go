@@ -269,6 +269,7 @@ func (o *Object) ClosePosition() {
 		spew.Dump("problem in placing order: ", err)
 		spew.Dump("problem in placing order: ", response)
 	}
+	spew.Dump("kucoin response on creating order:", response)
 }
 
 func (o *Object) OpenPosition(side string) {

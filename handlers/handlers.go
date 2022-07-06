@@ -163,7 +163,7 @@ func (o *Object) ActionHandler() {
 			log.Printf("strategy is stopped...\n")
 			continue
 		}
-		time.Sleep(2 * time.Second)
+		time.Sleep(5 * time.Second)
 		o.OpenPosition(action.Side)
 		log.Printf("action on %s completed...\n", action.Side)
 	}
@@ -219,6 +219,8 @@ func (o *Object) SendAction() {
 	if position.IsOpen {
 		if position.Side != action {
 			o.Action <- &Action{Side: action}
+		} else {
+			log.Printf("this action is open right now, skipping new action...")
 		}
 	} else {
 		o.Action <- &Action{Side: action}
@@ -256,6 +258,9 @@ func (o *Object) ClosePosition() {
 	if position.Side == "buy" {
 		side = "sell"
 	}
+	if position.CurrentQty < 0 {
+		position.CurrentQty = position.CurrentQty * -1
+	}
 	request := map[string]string{
 		"clientOid": uuid.New().String(),
 		"side":      side,
@@ -265,12 +270,7 @@ func (o *Object) ClosePosition() {
 		"size":      strconv.Itoa(position.CurrentQty),
 	}
 	spew.Dump("closing position with: ", request)
-	response, err := SharedKuCoinService.CreateOrder(request)
-	if err != nil {
-		spew.Dump("problem in placing order: ", err)
-		spew.Dump("problem in placing order: ", response)
-	}
-	spew.Dump("kucoin response on creating order:", response.RawData, response.Message, response.Code)
+	o.CreateOrder(request, 3)
 }
 
 func (o *Object) OpenPosition(side string) {
@@ -290,12 +290,7 @@ func (o *Object) OpenPosition(side string) {
 		"size":      strconv.Itoa(size),
 	}
 	spew.Dump("opening position with:", request)
-	response, err := SharedKuCoinService.CreateOrder(request)
-	if err != nil {
-		spew.Dump("problem in placing order: ", err)
-		spew.Dump("problem in placing order: ", response)
-	}
-	spew.Dump("kucoin response on creating order:", response.RawData, response.Message, response.Code)
+	o.CreateOrder(request, 3)
 }
 
 func (o *Object) GetOpenPosition() (position Position) {
@@ -332,6 +327,29 @@ func (o *Object) MarketPrice() (market Market) {
 	}
 	json.Unmarshal(response.RawData, &market)
 	return market
+}
+
+func (o *Object) CreateOrder(request map[string]string, retry int) {
+	for i := 0; i < retry; i++ {
+		response, err := SharedKuCoinService.CreateOrder(request)
+		if err != nil {
+			spew.Dump("problem in placing order: ", err)
+			time.Sleep(1 * time.Second)
+			continue
+		}
+		var orderResponse struct {
+			OrderId string `json:"orderId"`
+		}
+		err = json.Unmarshal(response.RawData, &orderResponse)
+		if err != nil {
+			spew.Dump("problem in placing order: ", response.Code, response.Message, response.RawData)
+			time.Sleep(3 * time.Second)
+			continue
+		}
+		log.Printf("order created with order id : %s", orderResponse.OrderId)
+		break
+	}
+
 }
 
 func GetLastEndOfTimeFrameSignal(signals []*Signals) *Signals {

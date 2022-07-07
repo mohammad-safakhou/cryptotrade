@@ -8,6 +8,7 @@ import (
 	"github.com/volatiletech/null/v8"
 	"log"
 	"strconv"
+	"sync"
 	"time"
 )
 
@@ -92,6 +93,7 @@ type Market struct {
 }
 
 type Object struct {
+	mu       sync.Mutex
 	Strategy *Strategy    `json:"strategy"`
 	Action   chan *Action `json:"-"`
 	Exit     bool         `json:"-"`
@@ -146,32 +148,45 @@ type WeightedSignals struct {
 }
 
 func (o *Object) StopStrategy() {
-	log.Printf("stopping strategy...\n")
-	o.ClosePosition()
-	o.Exit = true
+	o.mu.Lock()
+	{
+		log.Printf("stopping strategy...\n")
+		o.ClosePosition()
+		o.Exit = true
+	}
+	o.mu.Unlock()
 }
 
 func (o *Object) ResumeStrategy() {
-	log.Printf("resuming strategy...\n")
-	o.Exit = false
+	o.mu.Lock()
+	{
+		log.Printf("resuming strategy...\n")
+		o.Exit = false
+	}
+	o.mu.Unlock()
 }
 
 func (o *Object) ActionHandler() {
 	for action := range o.Action {
-		o.ClosePosition()
-		if o.Exit {
-			log.Printf("strategy is stopped...\n")
-			continue
+		o.mu.Lock()
+		{
+			o.ClosePosition()
+			if o.Exit {
+				log.Printf("strategy is stopped...\n")
+				o.mu.Unlock()
+				continue
+			}
+			time.Sleep(5 * time.Second)
+			o.OpenPosition(action.Side)
+			log.Printf("action on %s completed...\n", action.Side)
 		}
-		time.Sleep(5 * time.Second)
-		o.OpenPosition(action.Side)
-		log.Printf("action on %s completed...\n", action.Side)
+		o.mu.Unlock()
 	}
 }
 
 func (o *Object) SendAction() {
 	position := o.GetOpenPosition()
-	var subTimeFrameResults = null.NewBool(false, false)
+	var subTimeFrameResults = null.NewBool(false, true)
 
 	if len(o.Strategy.SubTimeFrames) != 0 {
 		var listOfSubResults []bool
@@ -192,7 +207,7 @@ func (o *Object) SendAction() {
 	mainResult := TimeFrameHandler(o.Strategy.MainTimeFrame)
 
 	var action string
-	if !subTimeFrameResults.IsZero() {
+	if len(o.Strategy.SubTimeFrames) != 0 {
 		switch o.Strategy.MainSubTimeFrameOperation {
 		case "AND":
 			if mainResult && subTimeFrameResults.Bool {
@@ -228,13 +243,18 @@ func (o *Object) SendAction() {
 }
 
 func (o *Object) ReceiveSignal(signal *Signals) {
-	log.Printf("receiving signal on timeframe %s - side %s\n", signal.TimeFrame, signal.Side)
-	if signal.TimeFrame == o.Strategy.MainTimeFrame.TimeFrame {
-		o.AddToMain(signal)
-	} else {
-		o.AddToSub(signal)
+	o.mu.Lock()
+	{
+		log.Printf("receiving signal on timeframe %s - side %s\n", signal.TimeFrame, signal.Side)
+
+		if signal.TimeFrame == o.Strategy.MainTimeFrame.TimeFrame {
+			o.AddToMain(signal)
+		} else {
+			o.AddToSub(signal)
+		}
+		o.SendAction()
 	}
-	o.SendAction()
+	o.mu.Unlock()
 }
 
 func (o *Object) AddToMain(signal *Signals) {
@@ -270,7 +290,7 @@ func (o *Object) ClosePosition() {
 		"size":      strconv.Itoa(position.CurrentQty),
 	}
 	spew.Dump("closing position with: ", request)
-	o.CreateOrder(request, 3)
+	o.CreateOrder(request, 100, true)
 }
 
 func (o *Object) OpenPosition(side string) {
@@ -290,7 +310,7 @@ func (o *Object) OpenPosition(side string) {
 		"size":      strconv.Itoa(size),
 	}
 	spew.Dump("opening position with:", request)
-	o.CreateOrder(request, 3)
+	o.CreateOrder(request, 100, false)
 }
 
 func (o *Object) GetOpenPosition() (position Position) {
@@ -329,12 +349,11 @@ func (o *Object) MarketPrice() (market Market) {
 	return market
 }
 
-func (o *Object) CreateOrder(request map[string]string, retry int) {
+func (o *Object) CreateOrder(request map[string]string, retry int, isClose bool) {
 	for i := 0; i < retry; i++ {
 		response, err := SharedKuCoinService.CreateOrder(request)
 		if err != nil {
 			spew.Dump("problem in placing order: ", err)
-			time.Sleep(1 * time.Second)
 			continue
 		}
 		var orderResponse struct {
@@ -343,13 +362,24 @@ func (o *Object) CreateOrder(request map[string]string, retry int) {
 		err = json.Unmarshal(response.RawData, &orderResponse)
 		if err != nil {
 			spew.Dump("problem in placing order: ", response.Code, response.Message, response.RawData)
-			time.Sleep(3 * time.Second)
 			continue
 		}
-		log.Printf("order created with order id : %s", orderResponse.OrderId)
-		break
+		openPosition := o.GetOpenPosition()
+		if isClose {
+			if openPosition.IsOpen {
+				continue
+			} else {
+				log.Printf("order created with order id : %s", orderResponse.OrderId)
+				break
+			}
+		} else {
+			if openPosition.IsOpen {
+				log.Printf("order created with order id : %s", orderResponse.OrderId)
+				break
+			}
+		}
+		continue
 	}
-
 }
 
 func GetLastEndOfTimeFrameSignal(signals []*Signals) *Signals {

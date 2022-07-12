@@ -90,6 +90,7 @@ var receiverCmd = &cobra.Command{
 				log.Println(err.Error())
 				return err
 			}
+			signal.ReceivedTime = time.Now()
 			handlers.SharedObject.ReceiveSignal(&signal)
 
 			return ctx.JSON(http.StatusOK, "")

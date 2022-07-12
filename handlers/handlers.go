@@ -246,10 +246,20 @@ func (o *Object) ReceiveSignal(signal *Signals) {
 	o.mu.Lock()
 	{
 		log.Printf("receiving signal on timeframe %s - side %s\n", signal.TimeFrame, signal.Side)
-
 		if signal.TimeFrame == o.Strategy.MainTimeFrame.TimeFrame {
+			if o.Strategy.MainTimeFrame.Storage.Signals[len(o.Strategy.MainTimeFrame.Storage.Signals)-1].PushedTime %30 < 10 && signal.PushedTime %30 < 10 {
+
+			}
+			if signal.Side == "prev" {
+				signal.Side = o.Strategy.MainTimeFrame.Storage.Signals[len(o.Strategy.MainTimeFrame.Storage.Signals)-1].Side
+			}
 			o.AddToMain(signal)
 		} else {
+			for _, value := range o.Strategy.MainTimeFrame.Storage.Signals {
+				if value.TimeFrame == signal.TimeFrame {
+					signal.Side = value.Side
+				}
+			}
 			o.AddToSub(signal)
 		}
 		o.SendAction()

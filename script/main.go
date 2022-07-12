@@ -76,6 +76,7 @@ func Calculate(name string) (string, float64) {
 	//var start = 0
 	var startIndex = 0
 	var prevRecord Records
+	var prevIndex int
 	for index, record := range records {
 		if record.Buy == 1 {
 			//start = 1
@@ -100,13 +101,16 @@ func Calculate(name string) (string, float64) {
 	} else if prevRecord.Sell == 1 {
 		currentStatus = -1
 	}
+	win := 0
+	loss := 0
 	var outcome float64
-	for _, record := range records {
+	for index, record := range records {
 		if currentStatus == 0 {
 			if record.Buy == 0 && record.Sell == 0 {
 				continue
 			} else {
 				prevRecord = record
+				prevIndex = index
 				if record.Buy == 1 {
 					currentStatus = 1
 				} else if record.Sell == 1 {
@@ -124,77 +128,110 @@ func Calculate(name string) (string, float64) {
 			}
 		}
 
-		if prevRecord.Buy == 1 {
-			if record.Low < prevRecord.Low {
-				diff := record.Close - prevRecord.Close
-				if prevRecord.Buy == 1 {
-					if diff > 0 {
-						// taking profit
-						outcome = outcome + diff
+		if index-prevIndex > 2 {
+			if prevRecord.Buy == 1 {
+				//if record.Low < prevRecord.Close*10/10 {
+				if false {
+					diff := ((record.Open + record.Close) / 2) - (prevRecord.Open+prevRecord.Close)/2
+					if prevRecord.Buy == 1 {
+						if diff > 0 {
+							// taking profit
+							outcome = outcome + diff
+						} else {
+							// losing profit
+							outcome = outcome + diff
+						}
 					} else {
-						// losing profit
-						outcome = outcome + diff
+						if diff > 0 {
+							// losing profit
+							outcome = outcome - diff
+						} else {
+							// taking profit
+							outcome = outcome - diff
+						}
 					}
-				} else {
-					if diff > 0 {
-						// losing profit
-						outcome = outcome - diff
-					} else {
-						// taking profit
-						outcome = outcome - diff
-					}
+					currentStatus = 0
 				}
-				currentStatus = 0
-			}
-		} else {
-			if record.High > prevRecord.High {
-				diff := record.Close - prevRecord.Close
-				if prevRecord.Buy == 1 {
-					if diff > 0 {
-						// taking profit
-						outcome = outcome + diff
+			} else if false {
+				if record.High > prevRecord.Close*10/10 {
+					diff := record.Close - prevRecord.Close
+					if prevRecord.Buy == 1 {
+						if diff > 0 {
+							// taking profit
+							outcome = outcome + diff
+						} else {
+							// losing profit
+							outcome = outcome + diff
+						}
 					} else {
-						// losing profit
-						outcome = outcome + diff
+						if diff > 0 {
+							// losing profit
+							outcome = outcome - diff
+						} else {
+							// taking profit
+							outcome = outcome - diff
+						}
 					}
-				} else {
-					if diff > 0 {
-						// losing profit
-						outcome = outcome - diff
-					} else {
-						// taking profit
-						outcome = outcome - diff
-					}
+					currentStatus = 0
 				}
-				currentStatus = 0
 			}
 		}
 
 		if record.Buy == 1 || record.Sell == 1 {
-			diff := record.Close - prevRecord.Close
+			var diff float64
+
+			//recordAvg := (record.Close + record.Open) / 2
+			//prevrecordAvg := (prevRecord.Close + prevRecord.Open) / 2
+			//var an float64
+			//if prevRecord.Close < prevRecord.Open {
+			//	an = (prevRecord.Close + prevrecordAvg) / 2
+			//} else {
+			//	an = (prevRecord.Open + prevrecordAvg) / 2
+			//}
+			//
+			//var an2 float64
+			//if record.Close < record.Open {
+			//	an2 = (record.Close + recordAvg) / 2
+			//} else {
+			//	an2 = (record.Open + recordAvg) / 2
+			//}
+			//
+			//diff = an2 - an
+			//Kir += 1
+			diff = record.Close - prevRecord.Close
+
+
+
 			if prevRecord.Buy == 1 {
 				if diff > 0 {
 					// taking profit
+					win += 1
 					outcome = outcome + diff
 				} else {
 					// losing profit
+					loss += 1
 					outcome = outcome + diff
 				}
 			} else {
 				if diff > 0 {
 					// losing profit
+					loss += 1
 					outcome = outcome - diff
 				} else {
 					// taking profit
+					win += 1
 					outcome = outcome - diff
 				}
 			}
 			prevRecord = record
+			prevIndex = index
 		}
 
 	}
 
 	//fmt.Println(Kir)
+	fmt.Println(fmt.Sprintf("\nstrategy with %s timeframe: \nwinrate = %d, lossrate = %d\n", name, win*100/(win+loss), loss*100/(win+loss)))
+
 	return name, outcome
 }
 func main() {

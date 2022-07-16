@@ -452,7 +452,7 @@ func TimeFrameHandler(timeFrame *TimeFrame) (response bool) {
 		timeDistribution := int64(timeFrame.TimeDistribution) * GetSecondsOfTimeFrame(timeFrame.TimeFrame) / 100
 		var affectedSignals []WeightedSignals
 		for i := len(timeFrame.Storage.Signals) - 1; i >= 0; i-- {
-			timeDistanceTillNow := time.Now().Unix() - (timeFrame.Storage.Signals[i].PushedTime / 1000))
+			timeDistanceTillNow := time.Now().Unix() - (timeFrame.Storage.Signals[i].PushedTime / 1000)
 
 			var weight int64
 			if len(affectedSignals) == 0 {

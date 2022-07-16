@@ -138,7 +138,7 @@ type Signals struct {
 	High        string `json:"high"`
 	Low         string `json:"low"`
 
-	PushedTime   time.Time `json:"pushed_time"`
+	PushedTime   int64     `json:"pushed_time"`
 	ReceivedTime time.Time `json:"received_time"`
 }
 
@@ -385,7 +385,7 @@ func (o *Object) CreateOrder(request map[string]string, retry int, isClose bool)
 
 func GetLastEndOfTimeFrameSignal(signals []*Signals) *Signals {
 	for i := len(signals) - 1; i >= 0; i-- {
-		if signals[i].PushedTime.Unix()%GetSecondsOfTimeFrame(signals[i].TimeFrame) < 5 {
+		if (signals[i].PushedTime/1000)%GetSecondsOfTimeFrame(signals[i].TimeFrame) < 5 {
 			return signals[i]
 		}
 	}
@@ -452,7 +452,7 @@ func TimeFrameHandler(timeFrame *TimeFrame) (response bool) {
 		timeDistribution := int64(timeFrame.TimeDistribution) * GetSecondsOfTimeFrame(timeFrame.TimeFrame) / 100
 		var affectedSignals []WeightedSignals
 		for i := len(timeFrame.Storage.Signals) - 1; i >= 0; i-- {
-			timeDistanceTillNow := int64(time.Now().Sub(timeFrame.Storage.Signals[i].PushedTime).Seconds())
+			timeDistanceTillNow := time.Now().Unix() - (timeFrame.Storage.Signals[i].PushedTime / 1000))
 
 			var weight int64
 			if len(affectedSignals) == 0 {

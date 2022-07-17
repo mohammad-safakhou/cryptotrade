@@ -41,12 +41,12 @@ var receiverCmd = &cobra.Command{
 			AllowMethods: []string{echo.GET, echo.HEAD, echo.PUT, echo.PATCH, echo.POST, echo.DELETE},
 		}))
 
-		dbPostgres, err := utils.PostgresConnection("localhost", "5432", "root", "root", "cryptotrade", "disable")
+		handlers.SharedPostgresDB, err = utils.PostgresConnection("localhost", "5432", "root", "root", "cryptotrade", "disable")
 		if err != nil {
 			panic(err)
 		}
 
-		strategy, err := models.Strategies(models.StrategyWhere.Name.EQ(null.NewString("main", true))).One(context.TODO(), dbPostgres)
+		strategy, err := models.Strategies(models.StrategyWhere.Name.EQ(null.NewString("main", true))).One(context.TODO(), handlers.SharedPostgresDB)
 		if err != nil {
 			panic(err)
 		}
@@ -81,7 +81,7 @@ var receiverCmd = &cobra.Command{
 
 			go func(bodyBytes []byte) {
 				content := models.Content{Data: null.NewString(string(bodyBytes), true)}
-				err := content.Insert(ctx.Request().Context(), dbPostgres, boil.Infer())
+				err := content.Insert(ctx.Request().Context(), handlers.SharedPostgresDB, boil.Infer())
 				if err != nil {
 				}
 			}(bodyBytes)

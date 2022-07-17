@@ -48,3 +48,19 @@ create table if not exists strategy
     updated_at timestamp,
     deleted_at timestamp
 );
+
+create table if not exists positions
+(
+    id SERIAL primary key,
+    market_price float,
+    side text,
+    leverage text,
+    position_size text,
+    position_type text,
+    symbol text,
+    is_close bool,
+
+    created_at timestamp,
+    updated_at timestamp,
+    deleted_at timestamp
+);

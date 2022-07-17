@@ -1,11 +1,15 @@
 package handlers
 
 import (
+	"context"
+	"cryptotrade/models"
+	"database/sql"
 	"encoding/json"
 	kucoin "github.com/Kucoin/kucoin-futures-go-sdk"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/google/uuid"
 	"github.com/volatiletech/null/v8"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 	"log"
 	"strconv"
 	"sync"
@@ -18,6 +22,7 @@ const (
 
 var SharedObject *Object
 var SharedKuCoinService *kucoin.ApiService
+var SharedPostgresDB *sql.DB
 
 func init() {
 	SharedKuCoinService = kucoin.NewApiService(
@@ -379,11 +384,37 @@ func (o *Object) CreateOrder(request map[string]string, retry int, isClose bool)
 				continue
 			} else {
 				log.Printf("order created with order id : %s", orderResponse.OrderId)
+				position := models.Position{
+					MarketPrice:  null.NewFloat64(openPosition.MarkPrice, true),
+					Side:         null.NewString(request["side"], true),
+					Leverage:     null.NewString(request["leverage"], true),
+					PositionSize: null.NewString(request["size"], true),
+					PositionType: null.NewString(request["type"], true),
+					Symbol:       null.NewString(request["symbol"], true),
+					IsClose:      null.NewBool(true, true),
+				}
+				err = position.Insert(context.TODO(), SharedPostgresDB, boil.Infer())
+				if err != nil {
+					log.Println("problem in inserting into position err = ", err.Error())
+				}
 				break
 			}
 		} else {
 			if openPosition.IsOpen {
 				log.Printf("order created with order id : %s", orderResponse.OrderId)
+				position := models.Position{
+					MarketPrice:  null.NewFloat64(openPosition.MarkPrice, true),
+					Side:         null.NewString(request["side"], true),
+					Leverage:     null.NewString(request["leverage"], true),
+					PositionSize: null.NewString(request["size"], true),
+					PositionType: null.NewString(request["type"], true),
+					Symbol:       null.NewString(request["symbol"], true),
+					IsClose:      null.NewBool(false, true),
+				}
+				err = position.Insert(context.TODO(), SharedPostgresDB, boil.Infer())
+				if err != nil {
+					log.Println("problem in inserting into position err = ", err.Error())
+				}
 				break
 			}
 		}

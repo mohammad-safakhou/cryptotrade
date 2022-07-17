@@ -178,6 +178,7 @@ func (o *Object) ActionHandler() {
 			}
 			o.OpenPosition(action.Side)
 			log.Printf("action on %s completed...\n", action.Side)
+			log.Println("new signal ended ---------------------------------------------------------------------------------------------------")
 		}
 		o.mu.Unlock()
 	}
@@ -251,6 +252,13 @@ func (o *Object) ReceiveSignal(signal *Signals) {
 			}
 			o.AddToMain(signal)
 		} else {
+			if signal.Side == "prev" {
+				for _, value := range o.Strategy.SubTimeFrames {
+					if value.TimeFrame == signal.TimeFrame {
+						signal.Side = value.Storage.Signals[len(value.Storage.Signals)-1].Side
+					}
+				}
+			}
 			o.AddToSub(signal)
 		}
 		o.SendAction()
@@ -488,6 +496,7 @@ func TimeFrameHandler(timeFrame *TimeFrame) (response bool) {
 				sell += value.Weight
 			}
 		}
+		spew.Dump("signal weights", affectedSignals)
 		if buy >= sell {
 			return true
 		} else {

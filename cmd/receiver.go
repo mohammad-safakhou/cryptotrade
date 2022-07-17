@@ -76,13 +76,15 @@ var receiverCmd = &cobra.Command{
 
 		// Routes
 		e.POST("/receiver", func(ctx echo.Context) error {
+			log.Println("new signal coming ---------------------------------------------------------------------------------------------------")
 			bodyBytes, _ := ioutil.ReadAll(ctx.Request().Body)
 
-			content := models.Content{Data: null.NewString(string(bodyBytes), true)}
-			err := content.Insert(ctx.Request().Context(), dbPostgres, boil.Infer())
-			if err != nil {
-				return ctx.JSON(http.StatusBadRequest, err)
-			}
+			go func(bodyBytes []byte) {
+				content := models.Content{Data: null.NewString(string(bodyBytes), true)}
+				err := content.Insert(ctx.Request().Context(), dbPostgres, boil.Infer())
+				if err != nil {
+				}
+			}(bodyBytes)
 
 			var signal handlers.Signals
 			err = json.Unmarshal(bodyBytes, &signal)

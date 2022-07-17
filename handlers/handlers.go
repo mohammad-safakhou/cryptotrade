@@ -253,6 +253,10 @@ func (o *Object) ReceiveSignal(signal *Signals) {
 		log.Printf("receiving signal on timeframe %s - side %s\n", signal.TimeFrame, signal.Side)
 		if signal.TimeFrame == o.Strategy.MainTimeFrame.TimeFrame {
 			if signal.Side == "prev" {
+				if len(o.Strategy.MainTimeFrame.Storage.Signals) == 0 {
+					log.Println("signal is not valid yet, no prev signals available")
+					return
+				}
 				signal.Side = o.Strategy.MainTimeFrame.Storage.Signals[len(o.Strategy.MainTimeFrame.Storage.Signals)-1].Side
 			}
 			o.AddToMain(signal)
@@ -260,6 +264,10 @@ func (o *Object) ReceiveSignal(signal *Signals) {
 			if signal.Side == "prev" {
 				for _, value := range o.Strategy.SubTimeFrames {
 					if value.TimeFrame == signal.TimeFrame {
+						if len(value.Storage.Signals) == 0 {
+							log.Println("signal is not valid yet, no prev signals available")
+							return
+						}
 						signal.Side = value.Storage.Signals[len(value.Storage.Signals)-1].Side
 					}
 				}

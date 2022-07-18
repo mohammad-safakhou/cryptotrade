@@ -156,21 +156,21 @@ type WeightedSignals struct {
 
 func (o *Object) StopStrategy() {
 	o.mu.Lock()
+	defer o.mu.Unlock()
 	{
 		log.Printf("stopping strategy...\n")
 		o.ClosePosition()
 		o.Exit = true
 	}
-	o.mu.Unlock()
 }
 
 func (o *Object) ResumeStrategy() {
 	o.mu.Lock()
+	defer o.mu.Unlock()
 	{
 		log.Printf("resuming strategy...\n")
 		o.Exit = false
 	}
-	o.mu.Unlock()
 }
 
 func (o *Object) ActionHandler() {
@@ -251,6 +251,7 @@ func (o *Object) SendAction() {
 
 func (o *Object) ReceiveSignal(signal *Signals) {
 	o.mu.Lock()
+	defer o.mu.Unlock()
 	{
 		log.Printf("receiving signal on timeframe %s - side %s\n", signal.TimeFrame, signal.Side)
 		if signal.TimeFrame == o.Strategy.MainTimeFrame.TimeFrame {
@@ -282,7 +283,6 @@ func (o *Object) ReceiveSignal(signal *Signals) {
 		}
 		o.SendAction()
 	}
-	o.mu.Unlock()
 }
 
 func (o *Object) AddToMain(signal *Signals) {

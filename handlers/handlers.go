@@ -23,6 +23,7 @@ const (
 var SharedObject *Object
 var SharedKuCoinService *kucoin.ApiService
 var SharedPostgresDB *sql.DB
+var SharedTempTimeFrame *TimeFrame
 
 func init() {
 	SharedKuCoinService = kucoin.NewApiService(
@@ -130,7 +131,8 @@ type TimeFrame struct {
 }
 
 type Storage struct {
-	Signals []*Signals `json:"signals"`
+	Signals       []*Signals `json:"signals"`
+	StableSignals []*Signals `json:"stable_signals"`
 }
 
 type Signals struct {
@@ -142,6 +144,7 @@ type Signals struct {
 	Close       string `json:"close"`
 	High        string `json:"high"`
 	Low         string `json:"low"`
+	IsStable    bool   `json:"is_stable"`
 
 	PushedTime   int64     `json:"pushed_time"`
 	ReceivedTime time.Time `json:"received_time"`
@@ -253,22 +256,22 @@ func (o *Object) ReceiveSignal(signal *Signals) {
 		log.Printf("receiving signal on timeframe %s - side %s\n", signal.TimeFrame, signal.Side)
 		if signal.TimeFrame == o.Strategy.MainTimeFrame.TimeFrame {
 			if signal.Side == "prev" {
-				if len(o.Strategy.MainTimeFrame.Storage.Signals) == 0 {
+				if len(o.Strategy.MainTimeFrame.Storage.StableSignals) == 0 {
 					log.Println("signal is not valid yet, no prev signals available")
 					return
 				}
-				signal.Side = o.Strategy.MainTimeFrame.Storage.Signals[len(o.Strategy.MainTimeFrame.Storage.Signals)-1].Side
+				signal.Side = o.Strategy.MainTimeFrame.Storage.StableSignals[len(o.Strategy.MainTimeFrame.Storage.StableSignals)-1].Side
 			}
 			o.AddToMain(signal)
 		} else {
 			if signal.Side == "prev" {
 				for _, value := range o.Strategy.SubTimeFrames {
 					if value.TimeFrame == signal.TimeFrame {
-						if len(value.Storage.Signals) == 0 {
+						if len(value.Storage.StableSignals) == 0 {
 							log.Println("signal is not valid yet, no prev signals available")
 							return
 						}
-						signal.Side = value.Storage.Signals[len(value.Storage.Signals)-1].Side
+						signal.Side = value.Storage.StableSignals[len(value.Storage.StableSignals)-1].Side
 					}
 				}
 			}
@@ -280,13 +283,21 @@ func (o *Object) ReceiveSignal(signal *Signals) {
 }
 
 func (o *Object) AddToMain(signal *Signals) {
-	SharedObject.Strategy.MainTimeFrame.Storage.Signals = append(SharedObject.Strategy.MainTimeFrame.Storage.Signals, signal)
+	if signal.IsStable {
+		SharedObject.Strategy.MainTimeFrame.Storage.StableSignals = append(SharedObject.Strategy.MainTimeFrame.Storage.StableSignals, signal)
+	} else {
+		SharedObject.Strategy.MainTimeFrame.Storage.Signals = append(SharedObject.Strategy.MainTimeFrame.Storage.Signals, signal)
+	}
 }
 
 func (o *Object) AddToSub(signal *Signals) {
 	for _, value := range SharedObject.Strategy.SubTimeFrames {
 		if value.TimeFrame == signal.TimeFrame {
-			value.Storage.Signals = append(value.Storage.Signals, signal)
+			if signal.IsStable {
+				value.Storage.StableSignals = append(value.Storage.StableSignals, signal)
+			} else {
+				value.Storage.Signals = append(value.Storage.Signals, signal)
+			}
 		}
 	}
 }
@@ -430,15 +441,6 @@ func (o *Object) CreateOrder(request map[string]string, retry int, isClose bool)
 	}
 }
 
-func GetLastEndOfTimeFrameSignal(signals []*Signals) *Signals {
-	for i := len(signals) - 1; i >= 0; i-- {
-		if (signals[i].PushedTime/1000)%GetSecondsOfTimeFrame(signals[i].TimeFrame) < 5 {
-			return signals[i]
-		}
-	}
-	return signals[len(signals)-1]
-}
-
 func GetSecondsOfTimeFrame(timeFrame string) int64 {
 	switch timeFrame {
 	case "1m":
@@ -493,7 +495,7 @@ func TimeFrameHandler(timeFrame *TimeFrame) (response bool) {
 		}
 	}(response)
 	if timeFrame.EnableEndOfTimeFrame {
-		lastSignal := GetLastEndOfTimeFrameSignal(timeFrame.Storage.Signals)
+		lastSignal := timeFrame.Storage.StableSignals[len(timeFrame.Storage.StableSignals)-1]
 		return GetSideResult(lastSignal.Side)
 	} else {
 		timeDistribution := int64(timeFrame.TimeDistribution) * GetSecondsOfTimeFrame(timeFrame.TimeFrame) / 100

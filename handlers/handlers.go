@@ -274,7 +274,11 @@ func (o *Object) ReceiveSignal(signal *Signals) {
 					}
 				}
 			}
-			o.AddToSub(signal)
+			if !o.AddToSub(signal) {
+				log.Println("signal with time frame given is not defined in strategy... closing")
+				log.Println("new signal ended ---------------------------------------------------------------------------------------------------")
+				return
+			}
 		}
 		o.SendAction()
 	}
@@ -289,9 +293,11 @@ func (o *Object) AddToMain(signal *Signals) {
 	}
 }
 
-func (o *Object) AddToSub(signal *Signals) {
+func (o *Object) AddToSub(signal *Signals) (isOk bool) {
+	isTimeF := false
 	for _, value := range SharedObject.Strategy.SubTimeFrames {
 		if value.TimeFrame == signal.TimeFrame {
+			isTimeF = true
 			if signal.IsStable {
 				value.Storage.StableSignals = append(value.Storage.StableSignals, signal)
 			} else {
@@ -299,6 +305,7 @@ func (o *Object) AddToSub(signal *Signals) {
 			}
 		}
 	}
+	return isTimeF
 }
 
 func (o *Object) ClosePosition() {

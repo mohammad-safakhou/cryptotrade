@@ -8,29 +8,29 @@ import (
 
 func GetSecondsOfTimeFrame(timeFrame string) int64 {
 	switch timeFrame {
-	case "1m":
+	case "1":
 		return 60 * 1
-	case "3m":
+	case "3":
 		return 60 * 3
-	case "5m":
+	case "5":
 		return 60 * 5
-	case "10m":
+	case "10":
 		return 60 * 10
-	case "15m":
+	case "15":
 		return 60 * 15
-	case "30m":
+	case "30":
 		return 60 * 30
-	case "1h":
+	case "60":
 		return 60 * 60
-	case "2h":
+	case "120":
 		return 60 * 60 * 2
-	case "3h":
+	case "180":
 		return 60 * 60 * 3
-	case "4h":
+	case "240":
 		return 60 * 60 * 4
-	case "1d":
+	case "1D":
 		return 60 * 60 * 24
-	case "1w":
+	case "1W":
 		return 60 * 60 * 24 * 7
 	case "1M":
 		return 60 * 60 * 24 * 30

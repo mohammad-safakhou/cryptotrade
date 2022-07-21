@@ -106,7 +106,44 @@ var receiverCmd = &cobra.Command{
 			return ctx.JSON(http.StatusOK, "resumed the bot")
 		})
 		e.GET("/object/details", func(ctx echo.Context) error {
-			return ctx.JSON(http.StatusOK, handlers.SharedObject)
+			var subTimeFrames []*TimeFrame
+			for _, value := range handlers.SharedObject.Strategy.SubTimeFrames {
+				subTimeFrames = append(subTimeFrames, &TimeFrame{
+					Storage: &Storage{
+						Signals:       value.Storage.Signals,
+						StableSignals: value.Storage.StableSignals,
+					},
+					TimeFrame:               value.TimeFrame,
+					EnableEndOfTimeFrame:    value.EnableEndOfTimeFrame,
+					SignalRepeatsToConsider: value.SignalRepeatsToConsider,
+					TimeDistribution:        value.TimeDistribution,
+				})
+			}
+			var object = Object{
+				Strategy: &Strategy{
+					MainTimeFrame: &TimeFrame{
+						Storage: &Storage{
+							Signals:       handlers.SharedObject.Strategy.MainTimeFrame.Storage.Signals,
+							StableSignals: handlers.SharedObject.Strategy.MainTimeFrame.Storage.StableSignals,
+						},
+						TimeFrame:               handlers.SharedObject.Strategy.MainTimeFrame.TimeFrame,
+						EnableEndOfTimeFrame:    handlers.SharedObject.Strategy.MainTimeFrame.EnableEndOfTimeFrame,
+						SignalRepeatsToConsider: handlers.SharedObject.Strategy.MainTimeFrame.SignalRepeatsToConsider,
+						TimeDistribution:        handlers.SharedObject.Strategy.MainTimeFrame.TimeDistribution,
+					},
+					SubTimeFrames:             subTimeFrames,
+					SubTimeFramesOperation:    "",
+					MainSubTimeFrameOperation: "",
+					StopLoss:                  0,
+					TakeProfit:                0,
+					Symbol:                    "",
+					Leverage:                  0,
+					SizePercent:               0,
+					Currency:                  "",
+				},
+				Exit: handlers.SharedObject.Exit,
+			}
+			return ctx.JSON(http.StatusOK, object)
 		})
 
 		// Start server

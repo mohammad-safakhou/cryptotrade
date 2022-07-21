@@ -105,6 +105,9 @@ var receiverCmd = &cobra.Command{
 			handlers.SharedObject.ResumeStrategy()
 			return ctx.JSON(http.StatusOK, "resumed the bot")
 		})
+		e.GET("/object/details", func(ctx echo.Context) error {
+			return ctx.JSON(http.StatusOK, handlers.SharedObject)
+		})
 
 		// Start server
 		go func() {

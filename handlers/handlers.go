@@ -262,7 +262,9 @@ func (o *Object) ReceiveSignal(signal *Signals) {
 				}
 				signal.Side = o.Strategy.MainTimeFrame.Storage.StableSignals[len(o.Strategy.MainTimeFrame.Storage.StableSignals)-1].Side
 			}
-			o.AddToMain(signal)
+			if !o.AddToMain(signal) {
+				return
+			}
 		} else {
 			if signal.Side == "prev" {
 				for _, value := range o.Strategy.SubTimeFrames {
@@ -285,22 +287,31 @@ func (o *Object) ReceiveSignal(signal *Signals) {
 	}
 }
 
-func (o *Object) AddToMain(signal *Signals) {
+func (o *Object) AddToMain(signal *Signals) bool {
 	if signal.IsStable {
-		SharedObject.Strategy.MainTimeFrame.Storage.StableSignals = append(SharedObject.Strategy.MainTimeFrame.Storage.StableSignals, signal)
+		o.Strategy.MainTimeFrame.Storage.StableSignals = append(o.Strategy.MainTimeFrame.Storage.StableSignals, signal)
 	} else {
-		SharedObject.Strategy.MainTimeFrame.Storage.Signals = append(SharedObject.Strategy.MainTimeFrame.Storage.Signals, signal)
+		if len(o.Strategy.MainTimeFrame.Storage.StableSignals) == 0 {
+			log.Println("strategy cant start without stable signal... closing")
+			return false
+		}
+		o.Strategy.MainTimeFrame.Storage.Signals = append(o.Strategy.MainTimeFrame.Storage.Signals, signal)
 	}
+	return true
 }
 
 func (o *Object) AddToSub(signal *Signals) (isOk bool) {
 	isTimeF := false
-	for _, value := range SharedObject.Strategy.SubTimeFrames {
+	for _, value := range o.Strategy.SubTimeFrames {
 		if value.TimeFrame == signal.TimeFrame {
 			isTimeF = true
 			if signal.IsStable {
 				value.Storage.StableSignals = append(value.Storage.StableSignals, signal)
 			} else {
+				if len(value.Storage.StableSignals) == 0 {
+					log.Println("strategy cant start without stable signal... closing")
+					return false
+				}
 				value.Storage.Signals = append(value.Storage.Signals, signal)
 			}
 		}

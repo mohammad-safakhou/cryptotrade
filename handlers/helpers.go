@@ -52,13 +52,6 @@ func GetSideResult(side string) bool {
 
 func TimeFrameHandler(timeFrame *TimeFrame) (response bool) {
 	log.Printf("handling timeframe = %s\n", timeFrame.TimeFrame)
-	defer func(resp bool) {
-		if resp {
-			log.Printf("handled timeframe %s with action = buy\n", timeFrame.TimeFrame)
-		} else {
-			log.Printf("handled timeframe %s with action = sell\n", timeFrame.TimeFrame)
-		}
-	}(response)
 	if timeFrame.EnableEndOfTimeFrame {
 		lastSignal := timeFrame.Storage.StableSignals[len(timeFrame.Storage.StableSignals)-1]
 		return GetSideResult(lastSignal.Side)
@@ -104,8 +97,10 @@ func TimeFrameHandler(timeFrame *TimeFrame) (response bool) {
 		}
 		spew.Dump("signal weights", affectedSignals)
 		if buy >= sell {
+			log.Printf("handled timeframe %s with action = buy\n", timeFrame.TimeFrame)
 			return true
 		} else {
+			log.Printf("handled timeframe %s with action = sell\n", timeFrame.TimeFrame)
 			return false
 		}
 	}

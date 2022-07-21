@@ -11,6 +11,7 @@ import (
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"log"
+	"math"
 	"strconv"
 	"sync"
 	"time"
@@ -192,7 +193,6 @@ func (o *Object) ActionHandler() {
 }
 
 func (o *Object) SendAction() {
-	position := o.GetOpenPosition()
 	var subTimeFrameResults = null.NewBool(false, true)
 
 	if len(o.Strategy.SubTimeFrames) != 0 {
@@ -237,7 +237,8 @@ func (o *Object) SendAction() {
 		}
 	}
 
-	log.Printf("new action = %s\n", action)
+	log.Printf("main result '%t', sub result '%t' =>  new action = %s\n", mainResult, subTimeFrameResults.Bool, action)
+	position := o.GetOpenPosition()
 	if position.IsOpen {
 		if position.Side != action {
 			o.Action <- &Action{Side: action}
@@ -347,7 +348,7 @@ func (o *Object) OpenPosition(side string) {
 	log.Printf("opening position %s", side)
 	account := o.GetAccountOverView()
 	market := o.MarketPrice()
-	size := int(float64(o.Strategy.SizePercent) / 100 * (account.AvailableBalance / market.Value * float64(o.Strategy.Leverage)) * 1000)
+	size := int(math.Floor(float64(o.Strategy.SizePercent) / 100 * (account.AvailableBalance / market.Value * float64(o.Strategy.Leverage)) * 1000))
 	if size == 0 {
 		size = 1
 	}

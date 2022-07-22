@@ -256,68 +256,24 @@ func (o *Object) ReceiveSignal(signal *Signals) {
 	{
 		log.Printf("receiving signal on timeframe %s - side %s\n", signal.TimeFrame, signal.Side)
 		if signal.TimeFrame == o.Strategy.MainTimeFrame.TimeFrame {
-			if signal.Side == "prev" {
-				if len(o.Strategy.MainTimeFrame.Storage.StableSignals) == 0 {
-					log.Println("signal is not valid yet, no prev signals available")
-					return
-				}
-				signal.Side = o.Strategy.MainTimeFrame.Storage.StableSignals[len(o.Strategy.MainTimeFrame.Storage.StableSignals)-1].Side
-			}
-			if !o.AddToMain(signal) {
-				return
-			}
+			o.AddToMain(signal)
 		} else {
-			if signal.Side == "prev" {
-				for _, value := range o.Strategy.SubTimeFrames {
-					if value.TimeFrame == signal.TimeFrame {
-						if len(value.Storage.StableSignals) == 0 {
-							log.Println("signal is not valid yet, no prev signals available")
-							return
-						}
-						signal.Side = value.Storage.StableSignals[len(value.Storage.StableSignals)-1].Side
-					}
-				}
-			}
-			if !o.AddToSub(signal) {
-				log.Println("signal with time frame given is not defined in strategy... closing")
-				log.Println("new signal ended ---------------------------------------------------------------------------------------------------")
-				return
-			}
+			o.AddToSub(signal)
 		}
 		o.SendAction()
 	}
 }
 
-func (o *Object) AddToMain(signal *Signals) bool {
-	if signal.IsStable {
-		o.Strategy.MainTimeFrame.Storage.StableSignals = append(o.Strategy.MainTimeFrame.Storage.StableSignals, signal)
-	} else {
-		if len(o.Strategy.MainTimeFrame.Storage.StableSignals) == 0 {
-			log.Println("strategy cant start without stable signal... closing")
-			return false
-		}
-		o.Strategy.MainTimeFrame.Storage.Signals = append(o.Strategy.MainTimeFrame.Storage.Signals, signal)
-	}
-	return true
+func (o *Object) AddToMain(signal *Signals) {
+	o.Strategy.MainTimeFrame.Storage.Signals = append(o.Strategy.MainTimeFrame.Storage.Signals, signal)
 }
 
-func (o *Object) AddToSub(signal *Signals) (isOk bool) {
-	isTimeF := false
+func (o *Object) AddToSub(signal *Signals) {
 	for _, value := range o.Strategy.SubTimeFrames {
 		if value.TimeFrame == signal.TimeFrame {
-			isTimeF = true
-			if signal.IsStable {
-				value.Storage.StableSignals = append(value.Storage.StableSignals, signal)
-			} else {
-				if len(value.Storage.StableSignals) == 0 {
-					log.Println("strategy cant start without stable signal... closing")
-					return false
-				}
-				value.Storage.Signals = append(value.Storage.Signals, signal)
-			}
+			value.Storage.Signals = append(value.Storage.Signals, signal)
 		}
 	}
-	return isTimeF
 }
 
 func (o *Object) ClosePosition() {

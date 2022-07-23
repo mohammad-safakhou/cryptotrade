@@ -115,7 +115,7 @@ type Strategy struct {
 	SubTimeFramesOperation    string       `json:"sub_time_frames_operation"`
 	MainSubTimeFrameOperation string       `json:"main_sub_time_frame_operation"`
 	StopLoss                  int          `json:"stop_loss"`
-	TakeProfit                int          `json:"take_profit"`
+	TakeProfit                float64      `json:"take_profit"`
 	Symbol                    string       `json:"symbol"`
 	Leverage                  int          `json:"leverage"`
 	SizePercent               int          `json:"size_percent"`
@@ -324,7 +324,7 @@ func (o *Object) OpenPosition(side string) {
 		"size":          strconv.Itoa(size),
 		"stop":          stop,
 		"stopPriceType": "TP",
-		"stopPrice":     strconv.Itoa(int(float64(o.Strategy.TakeProfit)*market.Value/100) + sign*int(market.Value)),
+		"stopPrice":     strconv.Itoa(int(o.Strategy.TakeProfit*market.Value/100) + sign*int(market.Value)),
 	}
 	spew.Dump("opening position with:", request)
 	o.CreateOrder(request, 100, false)

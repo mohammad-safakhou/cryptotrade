@@ -368,7 +368,7 @@ func (o *Object) OpenPosition(side string) {
 		"size":          strconv.Itoa(size),
 		"stop":          stop,
 		"stopPriceType": "TP",
-		"stopPrice":     strconv.Itoa(int(float64(o.Strategy.TakeProfit)*market.Value/100) + sign*market.Value),
+		"stopPrice":     strconv.Itoa(int(float64(o.Strategy.TakeProfit)*market.Value/100) + sign*int(market.Value)),
 	}
 	spew.Dump("opening position with:", request)
 	o.CreateOrder(request, 100, false)

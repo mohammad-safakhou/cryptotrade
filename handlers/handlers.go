@@ -352,13 +352,23 @@ func (o *Object) OpenPosition(side string) {
 	if size == 0 {
 		size = 1
 	}
+
+	stop := "down"
+	sign := -1
+	if side == "buy" {
+		stop = "up"
+		sign = 1
+	}
 	request := map[string]string{
-		"clientOid": uuid.New().String(),
-		"side":      side,
-		"symbol":    o.Strategy.Symbol,
-		"leverage":  strconv.Itoa(o.Strategy.Leverage),
-		"type":      "market",
-		"size":      strconv.Itoa(size),
+		"clientOid":     uuid.New().String(),
+		"side":          side,
+		"symbol":        o.Strategy.Symbol,
+		"leverage":      strconv.Itoa(o.Strategy.Leverage),
+		"type":          "market",
+		"size":          strconv.Itoa(size),
+		"stop":          stop,
+		"stopPriceType": "TP",
+		"stopPrice":     strconv.Itoa(int(float64(o.Strategy.TakeProfit)*market.Value/100) + sign*market.Value),
 	}
 	spew.Dump("opening position with:", request)
 	o.CreateOrder(request, 100, false)
